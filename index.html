@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Resona NMR Studio — Download</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --line: #262b36;
+    --text: #e6e8ec;
+    --muted: #99a1b3;
+    --accent: #4c8dff;
+    --accent-hover: #6ba1ff;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f7f8fa; --panel: #fff; --line: #e3e6ec;
+      --text: #1a1d24; --muted: #5b6474; --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 3rem 1.25rem 4rem;
+    background: var(--bg); color: var(--text);
+    font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", sans-serif;
+  }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 1.9rem; margin: 0 0 .4rem; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin: 0 0 2.5rem; }
+  h2 { font-size: 1.05rem; margin: 2.5rem 0 .9rem;
+       text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 1.25rem 1.4rem; margin-bottom: .9rem;
+  }
+  .row { display: flex; align-items: center; gap: 1rem;
+         flex-wrap: wrap; justify-content: space-between; }
+  .name { font-weight: 600; font-size: 1.02rem; }
+  .meta { color: var(--muted); font-size: .88rem; margin-top: .25rem; }
+  .btn {
+    display: inline-block; padding: .55rem 1.15rem; border-radius: 8px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    font-weight: 600; font-size: .93rem; white-space: nowrap;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .note { border-left: 3px solid var(--line); padding: .1rem 0 .1rem 1rem;
+          color: var(--muted); font-size: .92rem; margin: 1rem 0; }
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .87em;
+  }
+  pre { background: var(--panel); border: 1px solid var(--line);
+        border-radius: 8px; padding: .85rem 1rem; overflow-x: auto; }
+  pre code { font-size: .86rem; line-height: 1.6; }
+  .gate { border-color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
+  td, th { text-align: left; padding: .45rem .5rem;
+           border-bottom: 1px solid var(--line); font-size: .92rem; }
+  th { color: var(--muted); font-weight: 600; }
+  footer { margin-top: 3.5rem; padding-top: 1.5rem;
+           border-top: 1px solid var(--line); color: var(--muted);
+           font-size: .87rem; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Resona NMR Studio</h1>
+  <p class="sub">An all-in-one NMR processing and assignment platform.</p>
+
+  <h2>Download</h2>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="name">macOS app</div>
+        <div class="meta">Apple Silicon &middot; 77 MB</div>
+      </div>
+      <a class="btn" href="https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-mac-arm64.dmg">Download .dmg</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="name">macOS MCP server</div>
+        <div class="meta">AI agents &middot; 29 MB &middot; separate from the app</div>
+      </div>
+      <a class="btn" href="https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-mac-arm64.tar.gz">Download .tar.gz</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div>
+        <div class="name">Windows installer</div>
+        <div class="meta">Installs the app and the MCP server together</div>
+      </div>
+      <a class="btn" href="https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaSetup-0.1.0.exe">Download .exe</a>
+    </div>
+  </div>
+
+  <h2>Install</h2>
+
+  <h2 style="margin-top:1.4rem">macOS</h2>
+  <div class="note">
+    Open the <code>.dmg</code>, drag <strong>Resona</strong> into Applications,
+    and launch it. Apple Silicon only (M1/M2/M3/M4).
+  </div>
+  <div class="note">
+    The app is not notarized, so Gatekeeper warns on first launch
+    (<em>&ldquo;Resona is from an unidentified developer&rdquo;</em>). This is
+    expected and the app is safe. Right-click <strong>Resona</strong> &rarr;
+    <strong>Open</strong> &rarr; <strong>Open</strong>, or run
+    <code>xattr -cr /Applications/Resona.app</code> once from Terminal.
+  </div>
+
+  <h2>Windows</h2>
+  <div class="note">
+    Run <code>ResonaSetup-0.1.0.exe</code>. It installs the app and the MCP
+    server. It is not code-signed, so SmartScreen may warn &mdash; choose
+    <strong>More info</strong> &rarr; <strong>Run anyway</strong>. No
+    administrator rights needed; you can decline the UAC prompt.
+  </div>
+
+  <h2>MCP server for AI agents</h2>
+  <div class="note">
+    The MCP server lets AI agents call Resona&rsquo;s 55 tools directly:
+    spectrum processing, peak picking, protein auto-assignment, J-coupling
+    search, relaxation, DNMR fitting.
+    <strong>Windows users are done</strong> &mdash; the installer already
+    places the server under <code>%LOCALAPPDATA%\Resona\mcp\</code>. macOS
+    users unpack the <code>.tar.gz</code> separately, keeping
+    <code>ResonaMCP</code> and <code>_internal/</code> in the same folder.
+  </div>
+
+  <h2>Connect an AI client</h2>
+  <p class="sub" style="margin:.4rem 0 .6rem">
+    Absolute paths only. Restart the client fully after editing.
+  </p>
+<pre><code>{
+  "mcpServers": {
+    "resona": {
+      "command": "C:\\Users\\YOUR_NAME\\AppData\\Local\\Resona\\mcp\\ResonaMCP.exe"
+    }
+  }
+}</code></pre>
+  <div class="note">
+    macOS path format:
+    <code>/Users/YOUR_NAME/ResonaMCP/ResonaMCP/ResonaMCP</code>.
+    Config file locations &mdash; Claude Desktop:
+    <code>%APPDATA%\Claude\claude_desktop_config.json</code> (Windows) or
+    <code>~/Library/Application Support/Claude/</code> (macOS); Cursor:
+    <code>~/.cursor/mcp.json</code>; VS Code: <code>~/.vscode/mcp.json</code>.
+  </div>
+  <div class="note">
+    Success looks like these tools appearing: <code>project_status</code>,
+    <code>process_1d</code>, <code>run_batch</code>,
+    <code>assign_protein</code>, <code>j_couplings_1d</code>,
+    <code>dnmr_vt_fit</code>.
+  </div>
+
+  <div class="card gate" style="margin-top:1.6rem">
+    <div class="name">Human approval is required</div>
+    <div class="meta" style="margin-top:.5rem">
+      The server cannot bypass your sign-off. <code>apply_labels</code> &mdash;
+      the tool that writes labels onto real peaks &mdash; refuses to run
+      unless the caller passes both <code>human_confirmed: true</code> and a
+      <code>human_statement</code>. Read-only inspection, review, candidate
+      approval, and dry-run previews are unrestricted.
+      Agents propose; you approve.
+    </div>
+  </div>
+
+  <h2>Requirements</h2>
+  <table>
+    <tr><th>macOS</th><td>12 or newer, Apple Silicon</td></tr>
+    <tr><th>Windows</th><td>10 or newer</td></tr>
+  </table>
+
+  <footer>
+    <p>
+      Non-commercial use only: students, private individuals, government
+      agencies, public educational institutions, and non-profit
+      organizations. Commercial use by a for-profit entity requires a
+      separate paid license.
+    </p>
+    <p>
+      Copyright &copy; 2026 Jeahoo Kwon. All rights reserved.
+      &middot; <a href="mailto:all4nmr@gmail.com">all4nmr@gmail.com</a>
+    </p>
+  </footer>
+
+</main>
+</body>
+</html>
