@@ -15,8 +15,8 @@ page — files download directly, no intermediate page.
 
 | File | Size | What it is |
 |---|---|---|
-| `Resona-0.1.0-mac-arm64.dmg` | 77 MB | The application |
-| `ResonaMCP-0.1.0-mac-arm64.zip` | 29 MB | MCP server for AI agents (separate download) |
+| `Resona-0.1.0-mac-arm64.dmg` | 78 MB | The application |
+| `ResonaMCP-0.1.0-mac-arm64.zip` | 30 MB | MCP server for AI agents (separate download) |
 
 ### Windows
 
