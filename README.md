@@ -15,8 +15,8 @@ page — files download directly, no intermediate page.
 
 | File | Size | What it is |
 |---|---|---|
-| `Resona-mac-arm64.dmg` | 77 MB | The application |
-| `ResonaMCP-mac-arm64.tar.gz` | 29 MB | MCP server for AI agents (separate download) |
+| `Resona-0.1.0-mac-arm64.dmg` | 77 MB | The application |
+| `ResonaMCP-0.1.0-mac-arm64.zip` | 29 MB | MCP server for AI agents (separate download) |
 
 ### Windows
 
@@ -28,13 +28,13 @@ Windows ships as a single installer. There is nothing else to download.
 
 Latest version, direct links:
 
-- macOS app: <https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-mac-arm64.dmg>
-- macOS MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-mac-arm64.tar.gz>
+- macOS app: <https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-0.1.0-mac-arm64.dmg>
+- macOS MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-0.1.0-mac-arm64.zip>
 - Windows installer: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaSetup-0.1.0.exe>
 
 ## macOS: install the app
 
-1. Download `Resona-mac-arm64.dmg`.
+1. Download `Resona-0.1.0-mac-arm64.dmg`.
 2. Open it and drag **Resona** into your **Applications** folder.
 3. Launch it from Applications.
 
@@ -80,12 +80,12 @@ at:
 %LOCALAPPDATA%\Resona\mcp\ResonaMCP.exe
 ```
 
-**macOS users:** download `ResonaMCP-mac-arm64.tar.gz` separately. It is not
+**macOS users:** download `ResonaMCP-0.1.0-mac-arm64.zip` separately. It is not
 inside the .app.
 
 ```bash
 mkdir -p ~/ResonaMCP && cd ~/ResonaMCP
-tar -xzf ~/Downloads/ResonaMCP-mac-arm64.tar.gz
+unzip ~/Downloads/ResonaMCP-0.1.0-mac-arm64.zip
 chmod +x ResonaMCP/ResonaMCP
 ```
 
