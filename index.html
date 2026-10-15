@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resona NMR Studio — δ 10.00 → 0.00 · v0.1.0</title>
-<meta name="description" content="Resona NMR Studio v0.1.0: one bench for 1D, 2D, 3D and dynamic NMR. Opens Bruker pdata, NMRPipe and Sparky data, fits VT lineshapes, titration Kd and T1/T2/T1rho, proposes protein and glycan assignments for human review — drivable by AI agents via a local AI server. Windows installer now; macOS dmg and Linux planned.">
+<meta name="description" content="Resona NMR Studio v0.1.0: one bench for 1D, 2D, 3D and dynamic NMR. Opens Bruker pdata, NMRPipe and Sparky data, fits VT lineshapes, titration Kd and T1/T2/T1rho, proposes protein and glycan assignments for human review — drivable by AI agents via a local AI server. Windows installer now; macOS dmg and Linux tarballs.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M2 22 Q8 22 10 12 Q12 4 14 18 Q15 25 18 25 Q21 25 22 19 Q23 15 25 15 L30 15' stroke='%23191817' stroke-width='2.2' fill='none'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -485,7 +485,7 @@ footer{border-top:2px solid var(--ink);padding:60px 0 34px;background:var(--pape
           <dt>PROBE</dt><dd>TCI cryo</dd>
           <dt>TEMP</dt><dd>298.0 K</dd>
           <dt>RELEASE</dt><dd>v0.1.0 · <b>OCT 2026</b></dd>
-          <dt>INSTALLER</dt><dd>WINDOWS x64 · MAC/LINUX PLANNED</dd>
+          <dt>INSTALLER</dt><dd>WINDOWS x64 · MAC ARM64 · LINUX x64</dd>
           <dt>ADD-ON</dt><dd><b>LOCAL MCP SERVER</b></dd>
         </dl>
       </div>
@@ -864,7 +864,7 @@ footer{border-top:2px solid var(--ink);padding:60px 0 34px;background:var(--pape
   <div class="wrap">
     <div class="d-row rv"><span class="d-tag">δ 0.00</span><span class="d-rule"></span><span class="d-wit">TMS — the reference point; everything is measured against it</span></div>
     <h2 class="lm rv"><span>The reference point.<br>Start here.</span></h2>
-    <p class="sec-lede rv">Three Windows packages on GitHub — pick by whether an AI agent will drive Resona on that machine. Free for non-commercial use; commercial use needs a licence. macOS dmg and Linux builds are on the way.</p>
+    <p class="sec-lede rv">Three Windows packages on GitHub — pick by whether an AI agent will drive Resona on that machine. Free for non-commercial use; commercial use needs a licence. macOS dmg and Linux tarballs on their own tabs.</p>
 
     <div class="os-tabs rv" role="tablist" aria-label="Operating system">
       <button class="os-tab active" data-os="win" role="tab">Windows</button>
@@ -933,20 +933,27 @@ footer{border-top:2px solid var(--ink);padding:60px 0 34px;background:var(--pape
       </div>
     </div>
 
-    <!-- LINUX · build in preparation -->
+    <!-- LINUX · x86_64 tarballs, extract and run -->
     <div class="os-panel" data-os="lin">
       <div class="dl-grid">
         <div class="spec-sheet">
           <h4>Build sheet</h4>
-          <dl><dt>Version</dt><dd>v0.1.0</dd><dt>Status</dt><dd>In preparation</dd><dt>Requires</dt><dd>x86_64</dd></dl>
-          <ul><li>App and AI server as separate files, like macOS</li><li>NMRPipe, if used, runs natively — no VM</li></ul>
+          <dl><dt>Version</dt><dd>v0.1.0</dd><dt>Status</dt><dd>Released</dd><dt>Requires</dt><dd>x86_64 · glibc ≥ 2.39</dd></dl>
+          <ul><li>No installer — extract and run, no admin, no Python needed</li><li>Ubuntu 24.04+, Debian 13+, RHEL 10+, recent Fedora — older releases (Ubuntu 22.04, RHEL 8/9) are refused by glibc</li><li>NMRPipe, if used, runs natively — no VM</li></ul>
         </div>
         <div class="dl-cards">
-          <div class="dl-card main"><span class="kind">In preparation</span><h3>Resona for Linux</h3>
-            <p>The Linux build lands in resona-releases next to the Windows packages. Watch the releases page.</p>
+          <div class="dl-card main"><span class="kind">The app (no AI server)</span><h3>Resona-0.1.0-linux-x64.tar.gz</h3>
+            <p>Extract and run <b>./Resona</b> — double-click works too. Deleting the folder uninstalls.</p>
             <div class="dl-row">
-              <a class="dl-btn" data-file="Resona linux build" href="https://github.com/all4nmr/resona-releases/releases">Notify me on release <span class="arr">↓</span></a>
-              <span class="file-line">coming to GitHub resona-releases</span>
+              <a class="dl-btn" data-file="Resona-0.1.0-linux-x64.tar.gz" href="https://github.com/all4nmr/resona-releases/releases/tag/v0.1.0">Download for Linux <span class="arr">↓</span></a>
+              <span class="file-line">Resona-0.1.0-linux-x64.tar.gz — 123 MB · via GitHub resona-releases</span>
+            </div>
+          </div>
+          <div class="dl-card addon"><span class="kind">AI server only</span><h3>ResonaMCP-0.1.0-linux-x64.tar.gz</h3>
+            <p>The local server your AI client spawns. Extract next to the app and point the client at it.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="ResonaMCP-0.1.0-linux-x64.tar.gz" href="https://github.com/all4nmr/resona-releases/releases/tag/v0.1.0">Download AI server <span class="arr">↓</span></a>
+              <span class="file-line">ResonaMCP-0.1.0-linux-x64.tar.gz — 57 MB · via GitHub resona-releases</span>
             </div>
           </div>
         </div>

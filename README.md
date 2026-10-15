@@ -29,6 +29,16 @@ page — files download directly, no intermediate page.
 The two installers share one AppId, so installing one over the other
 upgrades in place.
 
+### Linux (x86_64)
+
+| File | Size | What it is |
+|---|---|---|
+| `Resona-0.1.0-linux-x64.tar.gz` | 123 MB | The application, extract and run |
+| `ResonaMCP-0.1.0-linux-x64.tar.gz` | 57 MB | MCP server for AI agents (separate download) |
+
+Requires **glibc ≥ 2.39** (Ubuntu 24.04+, Debian 13+, RHEL 10+, recent
+Fedora). Older releases (Ubuntu 22.04, RHEL 8/9) refuse to run it.
+
 Latest version, direct links:
 
 - macOS app: <https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-0.1.0-mac-arm64.dmg>
@@ -36,6 +46,8 @@ Latest version, direct links:
 - Windows installer (app + server): <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaSetup-0.1.0.exe>
 - Windows installer (app only): <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaAppSetup-0.1.0.exe>
 - Windows MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-0.1.0-win64.zip>
+- Linux app: <https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-0.1.0-linux-x64.tar.gz>
+- Linux MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-0.1.0-linux-x64.tar.gz>
 
 ## macOS: install the app
 
@@ -72,6 +84,20 @@ is unsigned, not malicious.
 No administrator rights are required: the installer installs per-user under
 `%LOCALAPPDATA%\Resona`, so you can decline the UAC prompt.
 
+## Linux: install the app
+
+No installer — extract and run:
+
+```bash
+tar -xzf Resona-0.1.0-linux-x64.tar.gz
+cd Resona
+./Resona
+```
+
+Double-clicking `Resona` in the file manager works too. Deleting the
+folder uninstalls. Requires **glibc ≥ 2.39** — check with `ldd --version`.
+On older distributions (Ubuntu 22.04, RHEL 8/9) it refuses to start.
+
 ## The MCP server (for AI agents)
 
 The MCP server lets AI agents (Claude, Cursor, ChatGPT, and similar) call
@@ -92,6 +118,13 @@ inside the .app.
 mkdir -p ~/ResonaMCP && cd ~/ResonaMCP
 unzip ~/Downloads/ResonaMCP-0.1.0-mac-arm64.zip
 chmod +x ResonaMCP/ResonaMCP
+```
+
+**Linux users:** download `ResonaMCP-0.1.0-linux-x64.tar.gz` separately.
+
+```bash
+mkdir -p ~/ResonaMCP && cd ~/ResonaMCP
+tar -xzf ~/Downloads/ResonaMCP-0.1.0-linux-x64.tar.gz
 ```
 
 Do not move or rename the `_internal/` folder — the server will not start
@@ -151,6 +184,7 @@ Agents propose; you approve.
 
 - macOS 12 or newer, Apple Silicon
 - Windows 10 or newer
+- Linux x86_64 with glibc ≥ 2.39 (`ldd --version`)
 
 ## Troubleshooting
 
