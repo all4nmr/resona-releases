@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resona NMR Studio — δ 10.00 → 0.00 · v0.1.0</title>
+<meta name="description" content="Resona NMR Studio v0.1.0: one bench for 1D, 2D, 3D and dynamic NMR. Opens Bruker pdata, NMRPipe and Sparky data, fits VT lineshapes, titration Kd and T1/T2/T1rho, proposes protein and glycan assignments for human review — drivable by AI agents via a local AI server. Windows installer now; macOS dmg and Linux planned.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M2 22 Q8 22 10 12 Q12 4 14 18 Q15 25 18 25 Q21 25 22 19 Q23 15 25 15 L30 15' stroke='%23191817' stroke-width='2.2' fill='none'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=IBM+Plex+Mono:wght@400;500&family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ============ tokens ============ */
+:root{
+  --paper:#f7f6f1; --paper2:#f0eee6;
+  --ink:#191817; --ink2:#3e3c38; --gray:#6e6a61; --gray2:#9a958a;
+  --hair:#d9d5c9; --hair2:#c2bdad;
+  --red:#d0401d; --redsoft:rgba(208,64,29,.06);
+  --dark:#17161a; --dink:#ede9dd; --dgray:#8f8b81; --dhair:#37343e;
+  --disp:'Bricolage Grotesque',system-ui,sans-serif;
+  --body:'Spectral',Georgia,serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --nav-h:58px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background-color:var(--paper);color:var(--ink);
+  font:400 16.5px/1.7 var(--body);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  /* graph paper */
+  background-image:
+    linear-gradient(rgba(25,24,23,.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(25,24,23,.045) 1px,transparent 1px),
+    linear-gradient(rgba(25,24,23,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(25,24,23,.06) 1px,transparent 1px);
+  background-size:26px 26px,26px 26px,130px 130px,130px 130px;
+}
+::selection{background:var(--red);color:#fff}
+img{display:block;max-width:100%}
+a{color:inherit}
+.wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+section{scroll-margin-top:calc(var(--nav-h) + 26px)}
+.mono{font-family:var(--mono)}
+
+/* reveals */
+.js .rv{opacity:0;transform:translateY(18px);transition:opacity .85s ease,transform .85s ease;transition-delay:var(--d,0s)}
+.js .rv.in{opacity:1;transform:none}
+.lm{overflow:hidden}.lm>span{display:block;transform:translateY(112%);transition:transform .95s cubic-bezier(.25,.6,.2,1)}
+.in .lm>span,.lm.in>span{transform:none}
+
+/* ============ nav ============ */
+#nav{position:fixed;top:0;left:0;right:0;height:var(--nav-h);z-index:120;background:var(--paper);
+  border-bottom:1.5px solid var(--ink)}
+.nav-in{max-width:1160px;margin:0 auto;padding:0 32px;height:100%;display:flex;align-items:center;gap:28px}
+.brand{font:700 19px var(--disp);letter-spacing:-.02em;text-decoration:none;display:flex;align-items:baseline;gap:11px}
+.brand small{font:500 8.5px var(--mono);letter-spacing:.26em;color:var(--gray)}
+.links{display:flex;gap:22px;margin-left:auto}
+.links a{font:500 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--gray);
+  text-decoration:none;transition:color .2s}
+.links a:hover,.links a.on{color:var(--red)}
+.nav-read{font:500 12px var(--mono);color:var(--red);border:1px solid var(--hair2);padding:6px 11px;min-width:84px;text-align:center}
+.nav-dl{font:600 10.5px var(--disp);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;color:var(--ink);
+  border:1.5px solid var(--ink);padding:9px 18px;transition:.22s}
+.nav-dl:hover{background:var(--ink);color:var(--paper)}
+#burger{display:none;margin-left:auto;background:none;border:1.5px solid var(--ink);font:600 10px var(--mono);
+  letter-spacing:.18em;text-transform:uppercase;padding:9px 14px;cursor:pointer;color:var(--ink)}
+#mnav{display:none}
+body.menu-open #mnav{display:flex;position:fixed;inset:0;z-index:130;background:var(--paper);flex-direction:column;
+  align-items:flex-start;justify-content:center;padding:0 9vw;gap:2px}
+#mnav a{font:700 clamp(1.7rem,6vw,2.5rem)/1.6 var(--disp);letter-spacing:-.02em;text-decoration:none;color:var(--ink)}
+#mnav a span{font:500 11px var(--mono);color:var(--red);margin-right:16px}
+
+/* ============ δ rail (fixed) ============ */
+#rail{position:fixed;left:26px;top:110px;bottom:90px;width:60px;z-index:80;pointer-events:none}
+.rail-line{position:absolute;left:6px;top:0;bottom:0;width:1.5px;background:var(--ink);opacity:.5}
+.rail-tick{position:absolute;left:2px;width:9px;height:1.5px;background:var(--ink);opacity:.45}
+.rail-tick span{position:absolute;left:14px;top:-6px;font:400 8.5px var(--mono);color:var(--gray2)}
+.rail-stop{position:absolute;left:2.5px;width:8px;height:8px;background:var(--paper);border:1.5px solid var(--ink);transform:rotate(45deg)}
+#railCursor{position:absolute;left:1px;transition:top .12s linear}
+#railCursor .sq{width:12px;height:12px;background:var(--red)}
+#railCursor .spin{position:absolute;left:-7px;top:1px;width:10px;height:10px;border:1px solid var(--red);border-radius:50%;overflow:hidden}
+#railCursor .spin::after{content:"";position:absolute;left:4px;top:1px;width:1.5px;height:4px;background:var(--red);animation:spin 2.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#railDelta{position:absolute;left:20px;top:-4px;font:500 10px var(--mono);color:var(--red);background:var(--paper);
+  border:1px solid var(--hair2);padding:2px 7px;white-space:nowrap}
+#rail.invert .rail-line,#rail.invert .rail-tick{background:var(--dink)}
+#rail.invert .rail-tick span{color:var(--dgray)}
+#rail.invert .rail-stop{background:var(--dark);border-color:var(--dink)}
+#rail.invert #railDelta{background:var(--dark);border-color:var(--dhair);color:#ff7a54}
+@media(max-width:1200px){#rail{display:none}}
+
+/* ============ masthead ============ */
+.hero{padding:130px 0 60px}
+.mast-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:56px;align-items:start}
+h1{font:800 clamp(4.2rem,9.5vw,7.6rem)/0.92 var(--disp);letter-spacing:-.035em}
+.tagline{margin-top:20px;font:italic 300 clamp(1.1rem,1.8vw,1.35rem)/1.55 var(--body);color:var(--gray);max-width:44ch}
+.tagline b{color:var(--ink);font-weight:500}
+.hero-note{margin-top:26px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.hero-note .arrow{font:400 12px var(--mono);color:var(--red);display:flex;gap:10px;align-items:center}
+.hero-note .arrow i{display:block;width:1px;height:22px;background:var(--red);animation:drip 1.8s infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top}55%{transform:scaleY(1);transform-origin:top}56%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.meta-card{border:1.5px solid var(--ink);background:var(--paper);position:relative}
+.meta-card header{padding:10px 16px;border-bottom:1.5px solid var(--ink);font:500 9px var(--mono);letter-spacing:.24em;color:var(--gray)}
+.meta-card dl{display:grid;grid-template-columns:auto 1fr;gap:9px 18px;padding:16px;font:400 11px var(--mono)}
+.meta-card dt{color:var(--gray2);letter-spacing:.1em}
+.meta-card dd{color:var(--ink2);text-align:right}
+.meta-card dd b{color:var(--red);font-weight:500}
+.stamp{position:absolute;top:-20px;right:-16px;transform:rotate(4deg);border:2px solid var(--red);color:var(--red);
+  font:500 8.5px var(--mono);letter-spacing:.2em;padding:7px 12px;background:var(--paper);opacity:.9}
+
+/* hero spectrum */
+.spec-frame{margin-top:54px;border:1.5px solid var(--ink);background:var(--paper)}
+.spec-plot{position:relative;height:360px;cursor:crosshair}
+.spec-plot svg{position:absolute;inset:0;width:100%;height:100%}
+.spec-plot svg *{vector-effect:non-scaling-stroke}
+.splab{position:absolute;top:10px;transform:translateX(-50%);text-decoration:none;text-align:center;z-index:5}
+.splab i{font:500 10px var(--mono);font-style:normal;color:var(--ink);letter-spacing:.06em;background:var(--paper);
+  padding:2px 6px;border:1px solid transparent;transition:.2s;display:block}
+.splab b{display:block;font:italic 400 12px var(--body);color:var(--red);opacity:0;transform:translateY(-4px);transition:.25s;white-space:nowrap}
+.splab:hover i{color:var(--red);border-color:var(--hair2)}
+.splab:hover b{opacity:1;transform:none}
+.pick{position:absolute;top:0;bottom:0;pointer-events:none}
+.pick .pl{position:absolute;top:0;bottom:0;left:0;width:0;border-left:1px dashed var(--red)}
+.pick .pt{position:absolute;top:6px;left:5px;font:500 9px var(--mono);color:var(--red);white-space:nowrap}
+#pkDot{position:absolute;width:9px;height:9px;border:1.5px solid var(--red);border-radius:50%;transform:translate(-50%,-50%);
+  opacity:0;transition:opacity .2s;pointer-events:none;z-index:4}
+#xh{position:absolute;top:0;bottom:0;width:1px;background:var(--ink);opacity:0;pointer-events:none}
+#xhTag{position:absolute;bottom:8px;font:500 10px var(--mono);color:var(--ink);background:var(--paper);border:1px solid var(--hair2);
+  padding:1px 7px;transform:translateX(-50%);opacity:0;pointer-events:none;white-space:nowrap}
+.spec-axis{position:relative;height:30px;border-top:1px solid var(--hair2)}
+.spec-axis span{position:absolute;top:9px;font:400 9.5px var(--mono);color:var(--gray);transform:translateX(-50%)}
+.spec-axis .axname{right:16px;transform:none;font:italic 400 12px var(--body);color:var(--gray2)}
+.spec-hint{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--hair);
+  font:400 9.5px var(--mono);letter-spacing:.12em;color:var(--gray2);text-transform:uppercase}
+.spec-hint b{color:var(--red);font-weight:500}
+.spec-video{background:#0e0d0c}
+.spec-video video{width:100%;height:auto;display:block;cursor:pointer}
+
+/* pulse-sequence marquee */
+.pulse{overflow:hidden;border-block:1.5px solid var(--ink);background:var(--paper2)}
+.pulse-track{display:flex;width:max-content;animation:pq 52s linear infinite}
+.pulse:hover .pulse-track{animation-play-state:paused}
+@keyframes pq{to{transform:translateX(-50%)}}
+.pq-group{display:flex;align-items:center}
+.pq-group span{font:500 10.5px var(--mono);letter-spacing:.2em;color:var(--ink2);padding:13px 0;white-space:nowrap}
+.pq-group i{color:var(--red);font-style:normal;margin:0 26px;font-family:var(--mono);font-size:10px}
+
+/* ============ sections ============ */
+.sec{padding:110px 0;position:relative}
+.sec .wm{position:absolute;top:40px;right:0;font:italic 300 clamp(6rem,14vw,11rem) var(--body);color:var(--ink);
+  opacity:.045;pointer-events:none;line-height:1;white-space:nowrap}
+.d-row{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+.d-tag{font:500 12px var(--mono);color:var(--red);letter-spacing:.08em;white-space:nowrap}
+.d-rule{flex:1;height:1px;background:var(--hair2)}
+.d-wit{font:italic 300 13.5px var(--body);color:var(--gray2);white-space:nowrap}
+h2{font:750 clamp(2rem,4.3vw,3.2rem)/1.08 var(--disp);letter-spacing:-.025em;max-width:20ch}
+.sec-lede{margin-top:16px;color:var(--gray);max-width:58ch;font-size:16.5px}
+.nowrap-lede{white-space:nowrap}
+
+/* ---- capabilities: peak table ---- */
+.cap-grid{display:grid;grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);gap:64px;align-items:start;margin-top:56px}
+.cap-side{position:sticky;top:calc(var(--nav-h) + 40px)}
+.cap-side p{color:var(--ink2);margin-top:18px}
+.cap-side .note{margin-top:22px;font:italic 300 14px var(--body);color:var(--gray)}
+.cap-side .note b{color:var(--red);font-weight:500}
+.ptable{border-top:2px solid var(--ink)}
+.prow{display:grid;grid-template-columns:54px 218px 1fr auto;gap:18px;align-items:baseline;padding:20px 10px;
+  border-bottom:1px solid var(--hair);transition:background .2s}
+.prow:hover{background:var(--redsoft)}
+.prow .pk{font:500 12px var(--mono);color:var(--gray2);transition:color .2s}
+.prow:hover .pk{color:var(--red)}
+.prow h3{font:650 17px var(--disp);letter-spacing:-.015em}
+.prow h3 .flag{font:italic 300 13px var(--body);color:var(--red);margin-left:8px;font-weight:300}
+.prow p{font-size:13.5px;color:var(--gray);line-height:1.6}
+.prow .tg{font:400 9.5px var(--mono);letter-spacing:.1em;color:var(--gray2);text-align:right;line-height:1.9;white-space:nowrap}
+
+/* ---- workbench ---- */
+.wb-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:start;margin-top:56px}
+.prose p{color:var(--ink2);margin-bottom:16px}
+.formats{border-top:2px solid var(--ink);margin-top:28px}
+.frow{display:grid;grid-template-columns:104px 1fr;gap:14px;padding:15px 8px;border-bottom:1px solid var(--hair);transition:background .2s,padding-left .2s}
+.frow:hover{background:var(--redsoft);padding-left:16px}
+.frow .f1{font:650 12.5px var(--disp);letter-spacing:.04em}
+.frow .f2{font:400 11px/1.9 var(--mono);color:var(--gray)}
+.fig{border:1.5px solid var(--ink);background:var(--paper)}
+.fig .plot{position:relative;height:250px}
+#fig6Plot{height:auto;min-height:0}
+.fig .plot svg{position:absolute;inset:0;width:100%;height:100%}
+.fig .plot svg *{vector-effect:non-scaling-stroke}
+figcaption{padding:11px 16px;border-top:1px solid var(--hair);font:italic 300 13.5px var(--body);color:var(--gray);display:flex;gap:12px}
+figcaption b{font:500 9.5px var(--mono);letter-spacing:.14em;color:var(--red);font-style:normal;white-space:nowrap;padding-top:3px}
+
+/* ---- dnmr ---- */
+.dfig{margin-bottom:56px}
+.dfig .plot{position:relative;height:250px}
+.dfig .plot svg{position:absolute;inset:0;width:100%;height:100%}
+.dfig .plot svg *{vector-effect:non-scaling-stroke}
+.controls{display:flex;align-items:center;gap:20px;padding:14px 18px;border-top:1px solid var(--hair)}
+.controls label{font:500 9.5px var(--mono);letter-spacing:.16em;color:var(--gray2);text-transform:uppercase}
+.controls output{font:500 12px var(--mono);color:var(--ink);min-width:60px;text-align:right;margin-left:auto}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:20px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:1.5px;background:var(--hair2)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--ink);margin-top:-5px;transition:background .2s}
+input[type=range]::-webkit-slider-thumb:hover{background:var(--red)}
+input[type=range]::-moz-range-track{height:1.5px;background:var(--hair2)}
+input[type=range]::-moz-range-thumb{width:12px;height:12px;background:var(--ink);border:none;border-radius:0}
+.readout{font:400 11px var(--mono);color:var(--gray);padding:11px 18px;border-top:1px solid var(--hair)}
+.readout b{color:var(--red);font-weight:500}
+.mini-btn{font:500 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;background:none;border:1.5px solid var(--ink);
+  color:var(--ink);padding:9px 16px;cursor:pointer;transition:.22s;margin-left:auto}
+.mini-btn:hover{background:var(--ink);color:var(--paper)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:44px}
+
+/* ---- films ---- */
+.film-grid{display:grid;grid-template-columns:1.55fr 1fr;gap:32px;margin-top:52px}
+.film-col{display:flex;flex-direction:column;gap:32px}
+.film{border:1.5px solid var(--ink);background:var(--paper);cursor:pointer;transition:.25s}
+.film:hover{transform:translate(-3px,-3px);box-shadow:4px 4px 0 var(--ink)}
+.film.big{grid-row:span 2;display:flex;flex-direction:column}
+.film .still{position:relative;overflow:hidden}
+.film img{width:100%;aspect-ratio:16/9;object-fit:cover;filter:grayscale(1) contrast(1.05);transition:filter .5s}
+.film:hover img{filter:grayscale(.2)}
+.film .play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;border:1.5px solid var(--paper);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(25,24,23,.4);transition:.25s}
+.film:hover .play{background:var(--red);border-color:var(--red)}
+.film .play svg{width:12px;height:12px;fill:var(--paper);margin-left:2px}
+.film .cap{display:flex;gap:13px;align-items:baseline;padding:13px 16px;border-top:1px solid var(--hair)}
+.film .cap b{font:500 9px var(--mono);letter-spacing:.18em;color:var(--red);white-space:nowrap}
+.film .cap span{font:italic 300 14.5px var(--body);color:var(--ink2)}
+.film .cap .dur{margin-left:auto;font:400 9.5px var(--mono);color:var(--gray2)}
+.film .cap .yt-link{margin-left:auto;font:400 9.5px var(--mono);letter-spacing:.1em;color:var(--gray2);text-decoration:none;white-space:nowrap}
+.film .cap .yt-link:hover{color:var(--red)}
+.film-empty{aspect-ratio:16/9;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:center;
+  font:400 10.5px var(--mono);color:var(--gray2);text-align:center;padding:24px}
+.film-empty b{color:var(--red);font-weight:500}
+
+/* ---- extras: wallpapers + game ---- */
+.wp-list{display:flex;flex-direction:column;border-top:1.5px solid var(--ink);margin-top:8px}
+.wp-row{display:grid;grid-template-columns:120px 1fr auto;gap:16px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--hair)}
+.wp-row img{width:120px;aspect-ratio:16/9;object-fit:cover;border:1px solid var(--hair2);background:var(--paper2)}
+.wp-row .wl{font:650 14px var(--disp);letter-spacing:-.01em}
+.wp-row .wd{font:400 9.5px var(--mono);letter-spacing:.1em;color:var(--red);margin-right:8px}
+.wp-links{display:flex;gap:8px}
+.wp-dl{font:600 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--ink);
+  border:1.5px solid var(--ink);padding:8px 13px;transition:.2s;white-space:nowrap}
+.wp-dl:hover{background:var(--ink);color:var(--paper)}
+.game-box{border:1.5px dashed var(--hair2);padding:26px;text-align:center;margin-top:8px}
+.game-box .gt{font:750 26px var(--disp);letter-spacing:.06em}
+.game-box .gt span{color:var(--red)}
+.game-box p{font:italic 300 13.5px var(--body);color:var(--gray);margin:8px 0 18px}
+
+/* ---- glycan (dark plate) ---- */
+#glycan{background:var(--dark);color:var(--dink);border-block:2px solid var(--ink);
+  background-image:linear-gradient(rgba(237,233,221,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(237,233,221,.035) 1px,transparent 1px);
+  background-size:26px 26px}
+#glycan .wm{color:var(--dink);opacity:.05}
+#glycan .d-rule{background:var(--dhair)}
+#glycan .d-wit{color:var(--dgray)}
+#glycan .sec-lede{color:var(--dgray)}
+.gl-grid{display:grid;grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr);gap:70px;align-items:center;margin-top:10px}
+.gl-fig{border:1px solid var(--dhair);background:#1c1b21}
+.gl-fig .plot{height:410px}
+#glycanFigPlot{height:auto;min-height:0}
+.gl-side{display:flex;flex-direction:column;gap:30px;min-width:0}
+.snfg-mini{border:1px solid var(--dhair);background:#1c1b21}
+.snfg-mini header{padding:10px 16px;border-bottom:1px solid var(--dhair);font:500 9px var(--mono);letter-spacing:.2em;color:var(--dgray);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.snfg-mini header span{letter-spacing:.06em;color:#5f5b55}
+.sn-presets{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 0}
+.snbtn{font:500 9.5px var(--mono);letter-spacing:.1em;background:none;border:1px solid var(--dhair);color:#c9c4b6;padding:7px 11px;cursor:pointer;transition:.2s}
+.snbtn:hover{border-color:#ff7a54;color:#fff}
+.snbtn.on{border-color:#ff7a54;color:#ff7a54}
+.sn-plot{padding:6px 6px 0}
+.sn-plot svg{width:100%;height:auto;display:block}
+.sn-out{display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--dhair)}
+.sn-out code{flex:1;font:400 11.5px/1.7 var(--mono);color:var(--dink);word-break:break-all}
+.sn-ctl{padding:2px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.sn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sn-row>label{font:500 8.5px var(--mono);letter-spacing:.14em;color:var(--dgray)}
+.sn-row input,.sn-row select{background:#17161a;border:1px solid var(--dhair);color:var(--dink);font:400 11px var(--mono);padding:6px 8px;width:58px}
+.sn-row select{width:auto}
+.sn-arrow{color:var(--dgray);font-family:var(--mono)}
+.sn-reswrap{position:relative}
+#snResDot{font-size:12px}
+.sn-reslist{position:absolute;left:0;top:calc(100% + 6px);z-index:30;display:none;width:332px;max-height:290px;overflow:auto;background:#17161a;border:1px solid var(--dhair);padding:10px 12px 12px}
+.sn-reslist.open{display:block}
+.sn-reslist h6{font:500 8.5px var(--mono);letter-spacing:.18em;color:var(--dgray);margin:9px 0 6px}
+.sn-reslist h6:first-child{margin-top:0}
+.sn-resgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.sn-res{display:flex;align-items:center;gap:7px;background:none;border:1px solid var(--dhair);color:#c9c4b6;font:500 10px var(--mono);padding:6px 7px;cursor:pointer;text-align:left}
+.sn-res:hover{border-color:#ff7a54;color:#fff}
+.sn-res.on{border-color:#ff7a54;color:#ff7a54}
+.sn-res svg{flex:none}
+.gl-fig figcaption{border-top-color:var(--dhair);color:var(--dgray)}
+.gl-prose p{color:#c9c4b6;margin-bottom:16px}
+.gl-list{list-style:none;margin-top:24px}
+.gl-list li{padding:13px 0;border-bottom:1px solid var(--dhair);color:#c9c4b6;font-size:14.5px;display:flex;gap:14px}
+.gl-list li .dash{color:var(--red)}
+.gl-list li b{color:var(--dink)}
+.gl-stats{display:flex;margin-top:32px;border:1px solid var(--dhair)}
+.gl-stats div{flex:1;padding:18px;border-right:1px solid var(--dhair)}
+.gl-stats div:last-child{border-right:0}
+.gl-stats b{font:750 26px var(--disp);letter-spacing:-.02em;display:block;color:var(--dink)}
+.gl-stats b i{font-style:normal;color:#ff7a54}
+.gl-stats span{font:400 8.5px var(--mono);letter-spacing:.16em;color:var(--dgray);text-transform:uppercase}
+
+/* ---- protein strips ---- */
+.pr-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:64px;align-items:center;margin-top:20px}
+
+/* ---- integrations ---- */
+.int-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:44px;margin-top:56px;align-items:stretch}
+.int-card{border:1.5px solid var(--ink);background:var(--paper);padding:30px;display:flex;flex-direction:column;gap:14px;transition:.25s}
+.int-card:hover{transform:translate(-3px,-3px);box-shadow:4px 4px 0 var(--ink)}
+.int-card .k{font:500 9px var(--mono);letter-spacing:.22em;color:var(--red)}
+.int-card h3{font:700 22px var(--disp);letter-spacing:-.02em}
+.int-card p{color:var(--gray);font-size:14.5px}
+.int-card .mini{font:400 10px/2 var(--mono);color:var(--gray2);letter-spacing:.08em;border-top:1px dashed var(--hair2);padding-top:12px;margin-top:auto}
+.code{background:var(--paper2);border:1px solid var(--hair2);padding:18px;font:400 11.5px/1.9 var(--mono);color:var(--ink2);overflow-x:auto;margin-top:4px}
+.code .cm{color:var(--gray2)}.code .st{color:var(--red)}
+
+/* ---- agents ---- */
+.ag-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:60px;align-items:start;margin-top:52px}
+.ag-prose p{color:var(--ink2);margin-bottom:16px}
+.tools-line{font:400 11px/2.2 var(--mono);color:var(--gray);border-block:1px solid var(--hair2);padding:16px 2px;margin-top:24px}
+.tools-line b{color:var(--red);font-weight:500}
+.exchange{border:1.5px solid var(--ink);background:var(--paper)}
+.exchange header{padding:11px 18px;border-bottom:1.5px solid var(--ink);font:500 9px var(--mono);letter-spacing:.24em;color:var(--gray)}
+.turn{padding:20px 24px;border-bottom:1px solid var(--hair)}
+.turn:last-child{border-bottom:0}
+.who{font:500 8.5px var(--mono);letter-spacing:.22em;text-transform:uppercase;margin-bottom:9px;color:var(--gray2)}
+.turn.agent .who{color:var(--red)}
+.turn.you p{font:italic 400 18px/1.5 var(--body)}
+.turn.agent ol{list-style:none;font:400 11px/2.3 var(--mono);color:var(--gray)}
+.turn.agent .ok{color:var(--ink)}
+.cfg{margin-top:24px;border:1px solid var(--hair2);position:relative;background:var(--paper)}
+.cfg pre{padding:20px;font:400 11.5px/1.9 var(--mono);color:var(--ink2);overflow-x:auto}
+.cfg .ck{color:var(--gray2)}.cfg .cs{color:var(--red)}
+.copy-btn{position:absolute;top:10px;right:10px;font:500 9px var(--mono);letter-spacing:.16em;background:var(--paper);
+  border:1px solid var(--hair2);color:var(--gray);padding:6px 11px;cursor:pointer;transition:.2s}
+.copy-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ---- download ---- */
+#download .d-zero{position:absolute;top:70px;right:20px;font:800 clamp(7rem,18vw,15rem) var(--disp);letter-spacing:-.05em;
+  color:transparent;-webkit-text-stroke:1.5px var(--hair2);pointer-events:none;line-height:1}
+.os-tabs{display:flex;border-bottom:1.5px solid var(--ink);margin:52px 0}
+.os-tab{font:650 12px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--gray);background:none;border:none;
+  padding:15px 30px;cursor:pointer;position:relative;transition:color .2s}
+.os-tab::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:var(--red);transform:scaleX(0);transition:transform .3s}
+.os-tab:hover{color:var(--ink)}
+.os-tab.active{color:var(--ink)}
+.os-tab.active::after{transform:scaleX(1)}
+.os-panel{display:none}
+.os-panel.active{display:block;animation:fin .45s ease}
+@keyframes fin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dl-grid{display:grid;grid-template-columns:290px 1fr;gap:60px;align-items:start}
+.spec-sheet{border-top:2px solid var(--ink)}
+.spec-sheet h4{font:500 9px var(--mono);letter-spacing:.24em;color:var(--gray2);padding:14px 2px;text-transform:uppercase}
+.spec-sheet dl{display:grid;grid-template-columns:88px 1fr;row-gap:12px;padding:2px 2px 18px;border-bottom:1px solid var(--hair);font-size:12px}
+.spec-sheet dt{font:400 9.5px var(--mono);letter-spacing:.1em;color:var(--gray2);text-transform:uppercase;padding-top:2px}
+.spec-sheet dd{font:400 11px var(--mono);color:var(--ink2);word-break:break-all}
+.spec-sheet ul{list-style:none;padding-top:16px}
+.spec-sheet li{font-size:13px;color:var(--gray);padding:4px 0 4px 20px;position:relative}
+.spec-sheet li::before{content:"—";position:absolute;left:0;color:var(--red)}
+.dl-cards{display:flex;flex-direction:column;gap:24px}
+.dl-card{border:1.5px solid var(--ink);background:var(--paper);padding:28px 30px;transition:.25s}
+.dl-card:hover{transform:translate(-3px,-3px);box-shadow:4px 4px 0 var(--ink)}
+.dl-card .kind{font:500 9px var(--mono);letter-spacing:.22em;text-transform:uppercase;display:block;margin-bottom:11px;color:var(--gray2)}
+.dl-card.main .kind{color:var(--red)}
+.dl-card h3{font:750 22px var(--disp);letter-spacing:-.02em;margin-bottom:7px}
+.dl-card>p{color:var(--gray);font-size:14px;max-width:52ch}
+.dl-row{display:flex;align-items:center;gap:22px;margin-top:22px;flex-wrap:wrap}
+.dl-btn{display:inline-flex;align-items:center;gap:12px;font:650 11.5px var(--disp);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);background:none;border:1.5px solid var(--ink);padding:14px 26px;text-decoration:none;cursor:pointer;transition:.22s}
+.dl-btn:hover{background:var(--ink);color:var(--paper)}
+.dl-btn .arr{font-family:var(--mono);transition:transform .2s}
+.dl-btn:hover .arr{transform:translateY(3px)}
+.file-line{font:400 10.5px var(--mono);color:var(--gray2)}
+.dl-notes{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair);display:flex;gap:36px;flex-wrap:wrap;font-size:13px;color:var(--gray)}
+.dl-notes b{color:var(--ink)}
+.faq{margin-top:80px;max-width:820px}
+.faq h3{font:500 9.5px var(--mono);letter-spacing:.24em;color:var(--gray2);text-transform:uppercase;margin-bottom:6px}
+.qa{border-bottom:1px solid var(--hair)}
+.qa:first-of-type{border-top:1px solid var(--hair)}
+.q{width:100%;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:21px 4px;background:none;border:0;
+  color:var(--ink);font:650 17.5px var(--disp);letter-spacing:-.015em;cursor:pointer;text-align:left;transition:color .2s}
+.q:hover{color:var(--red)}
+.q i{font:300 22px/1 var(--body);color:var(--gray2);transition:transform .3s,color .2s;font-style:normal;flex:none}
+.qa.open .q i{transform:rotate(45deg);color:var(--red)}
+.a{max-height:0;overflow:hidden;transition:max-height .45s ease;color:var(--gray);font-size:14.5px;line-height:1.75}
+.a>div{padding:0 4px 24px;max-width:62ch}
+.a b{color:var(--ink)}
+
+/* footer */
+footer{border-top:2px solid var(--ink);padding:60px 0 34px;background:var(--paper2)}
+.ft-grid{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:44px}
+.ft-brand p{color:var(--gray);font:italic 300 15.5px/1.6 var(--body);margin-top:14px;max-width:32ch}
+.ft-col h5{font:500 9px var(--mono);letter-spacing:.24em;color:var(--gray2);text-transform:uppercase;margin-bottom:16px}
+.ft-col a{display:block;color:var(--gray);text-decoration:none;font-size:13.5px;padding:4px 0;transition:.2s}
+.ft-col a:hover{color:var(--red);padding-left:5px}
+.ft-bottom{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:52px;padding-top:20px;border-top:1px solid var(--hair);
+  font:400 10px var(--mono);letter-spacing:.08em;color:var(--gray2)}
+
+#toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,80px);opacity:0;z-index:300;background:var(--ink);color:var(--paper);
+  padding:13px 22px;font:400 11.5px var(--mono);transition:.35s ease;max-width:88vw}
+#toast.show{transform:translate(-50%,0);opacity:1}
+#toast b{color:#ff9d7d;font-weight:500}
+
+@media(max-width:980px){
+  .links{display:none}
+  .nowrap-lede{white-space:normal}
+  #burger{display:block}
+  .mast-grid,.cap-grid,.wb-grid,.gl-grid,.pr-grid,.int-grid,.ag-grid{grid-template-columns:1fr;gap:44px}
+  .cap-side{position:static}
+  .prow{grid-template-columns:44px 1fr;grid-template-rows:auto auto auto}
+  .prow p{grid-column:2}
+  .prow .tg{grid-column:2;text-align:left;white-space:normal}
+  .duo{grid-template-columns:1fr}
+  .film-grid{grid-template-columns:1fr}
+  .film.big{grid-row:auto}
+  .dl-grid{grid-template-columns:1fr;gap:40px}
+  .ft-grid{grid-template-columns:1fr 1fr}
+  .spec-plot{height:280px}
+  #download .d-zero{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .rv{opacity:1;transform:none}
+  .lm>span{transform:none}
+}
+</style>
+</head>
+<body>
+<script>document.documentElement.classList.add('js');</script>
+
+<!-- ================= δ RAIL ================= -->
+<div id="rail" aria-hidden="true">
+  <div class="rail-line"></div>
+  <div id="railStops"></div>
+  <div id="railCursor"><span class="spin"></span><span class="sq"></span><span id="railDelta">δ 10.00</span></div>
+</div>
+
+<!-- ================= NAV ================= -->
+<nav id="nav">
+  <div class="nav-in">
+    <a class="brand" href="#top">Resona<small>NMR STUDIO · v0.1.0</small></a>
+    <div class="links">
+      <a href="#capabilities">Peaks</a><a href="#overview">Bench</a><a href="#dnmr">DNMR</a>
+      <a href="#glycan">Glycan</a><a href="#agents">AI agents</a><a href="#films">Films</a><a href="#extras">Lounge</a>
+    </div>
+    <span class="nav-read mono" id="navDelta" style="margin-left:auto">δ 10.00</span>
+    <a class="nav-dl" href="#download">Download</a>
+    <button id="burger">MENU</button>
+  </div>
+</nav>
+<div id="mnav">
+  <a href="#capabilities"><span>8.30</span>The Peak Table</a>
+  <a href="#overview"><span>7.26</span>The Bench</a>
+  <a href="#dnmr"><span>5.40</span>Dynamic NMR</a>
+  <a href="#glycan"><span>4.70</span>Glycan</a>
+  <a href="#protein"><span>3.62</span>Protein</a>
+  <a href="#integrations"><span>2.50</span>Integrations</a>
+  <a href="#agents"><span>1.18</span>AI agents</a>
+  <a href="#extras"><span>0.60</span>The Magnet Lounge — wallpapers &amp; game</a>
+  <a href="#download"><span>0.00</span>Download</a>
+</div>
+
+<!-- ================= MASTHEAD ================= -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="mast-grid">
+      <div class="rv">
+        <h1>Resona</h1>
+        <p class="tagline">NMR Studio — a workbench for <b>1D, 2D, 3D and dynamic NMR</b>. It opens the data you already have, fits what moves, and <b>proposes</b> protein and glycan assignments <b>for you to review</b>. Your AI agent can drive it file-first, through a local AI server.</p>
+        <div class="hero-note">
+          <a class="nav-dl" href="#download" style="display:inline-block">Download · Windows setup v0.1.0</a>
+          <span class="arrow"><i></i>THE PAGE RUNS δ 10.00 → 0.00. SCROLL.</span>
+        </div>
+      </div>
+      <div class="meta-card rv" style="--d:.12s">
+        <span class="stamp">FT-NMR · 700 MHz · v0.1.0</span>
+        <header>ACQUISITION PARAMETERS</header>
+        <dl>
+          <dt>FIELD</dt><dd>700.13 <b>MHz</b></dd>
+          <dt>PROBE</dt><dd>TCI cryo</dd>
+          <dt>TEMP</dt><dd>298.0 K</dd>
+          <dt>RELEASE</dt><dd>v0.1.0 · <b>OCT 2026</b></dd>
+          <dt>INSTALLER</dt><dd>WINDOWS x64 · MAC/LINUX PLANNED</dd>
+          <dt>ADD-ON</dt><dd><b>LOCAL MCP SERVER</b></dd>
+        </dl>
+      </div>
+    </div>
+
+    <!-- signature demo: media/glycan_auto_Assign.mp4 — silent autoplay loop, click for controls -->
+    <div class="spec-frame rv" style="--d:.18s">
+      <div class="spec-video">
+        <video id="heroVideo" src="media/glycan_auto_Assign.mp4" autoplay muted loop playsinline preload="metadata"></video>
+      </div>
+      <div class="spec-hint">
+        <span>SIGNATURE DEMO — GLYCAN AUTO-ASSIGNMENT · SILENT LOOP · CLICK VIDEO FOR CONTROLS</span>
+        <span>RESONA · δ 4.70</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- pulse sequence marquee -->
+<div class="pulse" aria-hidden="true">
+  <div class="pulse-track">
+    <div class="pq-group">
+      <span>P1 = 90°</span><i>—</i><span>D1 = 1.5 s</span><i>—</i><span>NS = 16</span><i>—</i><span>PH1 = x, −x</span><i>—</i><span>ACQ ▂▄▆█</span><i>—</i><span>SW = 12 PPM</span><i>—</i><span>O1 = 4.70</span><i>—</i><span>FT · PHASE · REFERENCE</span><i>—</i>
+    </div>
+    <div class="pq-group">
+      <span>P1 = 90°</span><i>—</i><span>D1 = 1.5 s</span><i>—</i><span>NS = 16</span><i>—</i><span>PH1 = x, −x</span><i>—</i><span>ACQ ▂▄▆█</span><i>—</i><span>SW = 12 PPM</span><i>—</i><span>O1 = 4.70</span><i>—</i><span>FT · PHASE · REFERENCE</span><i>—</i>
+    </div>
+  </div>
+</div>
+
+<!-- ================= δ 8.30 · CAPABILITIES ================= -->
+<section class="sec" id="capabilities">
+  <span class="wm">δ 8.30</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 8.30</span><span class="d-rule"></span><span class="d-wit">the amide envelope — where most of the work lives</span></div>
+    <h2 class="lm rv"><span>Ten instruments,<br>registered as peaks.</span></h2>
+    <div class="cap-grid">
+      <div class="cap-side rv">
+        <p class="sec-lede" style="margin-top:20px">Everything Resona does, one line per module — plain words, no brochure. Your AI client can reach each of these too.</p>
+        <p class="note"><b>PK 07</b> is flagged as the flagship. It earns it further down the page, at δ 4.70.</p>
+      </div>
+      <div class="ptable rv" style="--d:.1s">
+        <div class="prow"><span class="pk">PK 01</span><h3>Opens your files as they are</h3><p>Bruker pdata, NMRPipe FT, Sparky .ucsf — just open them. Nothing is ever written back into your folders.</p><span class="tg">BRUKER · NMRPIPE · UCSF</span></div>
+        <div class="prow"><span class="pk">PK 02</span><h3>1D processing</h3><p>Raw FID to phased spectrum: apodize, transform, phase — autophase included — then set your reference and go.</p><span class="tg">FT · PHASE · REFERENCE</span></div>
+        <div class="prow"><span class="pk">PK 03</span><h3>Peaks &amp; multiplets</h3><p>Auto picking in any polarity, multiplet patterns, deconvolution, and J values quoted as honest intervals — never a bare number.</p><span class="tg">AUTO-PK · J · ∫</span></div>
+        <div class="prow"><span class="pk">PK 04</span><h3>2D at the centre<span class="flag">— the main experiment</span></h3><p>Contours, strips, projections and 3D cubes. This is where the 2D work happens.</p><span class="tg">CONTOURS · STRIPS · LINK</span></div>
+        <div class="prow"><span class="pk">PK 05</span><h3>For moving peaks</h3><p>VT lineshapes, titration Kd, T₁/T₂/T₁rho — each fit comes with its report, so you can see what the number stands on.</p><span class="tg">VT-FIT · Kd · T₁/T₂</span></div>
+        <div class="prow"><span class="pk">PK 06</span><h3>Protein backbone proposals</h3><p>Your triple-resonance set walked, scored and linked — then handed to you for approve-or-hold. (Details at δ 3.62.)</p><span class="tg">BACKBONE · YOU CONFIRM</span></div>
+        <div class="prow"><span class="pk">PK 07</span><h3>Glycan assignment<span class="flag">— flagship</span></h3><p>HSQC, TOCSY and HMBC read together against measured shifts — SNFG cartoons, mixtures, qNMR. (Home turf at δ 4.70.)</p><span class="tg">HSQC · TOCSY · HMBC</span></div>
+        <div class="prow"><span class="pk">PK 08</span><h3>NMRPipe, from inside</h3><p>Conversion and processing without leaving Resona — Windows via WSL2, native on Mac and Linux. Uses your own Pipe install.</p><span class="tg">UI · WSL2 · NATIVE</span></div>
+        <div class="prow"><span class="pk">PK 09</span><h3>Fits, ready to run</h3><p>NMRSim fit inputs prepared here for the TopSpin side — scripts and templates, composed and editable.</p><span class="tg">FITS · TEMPLATES</span></div>
+        <div class="prow"><span class="pk">PK 10</span><h3>Your AI can drive it</h3><p>Claude, Cursor, any AI client — 55 tools through a local server, with manuals it reads itself. It prepares; you confirm.</p><span class="tg">AI AGENTS · 55 TOOLS</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 7.26 · WORKBENCH ================= -->
+<section class="sec" id="overview">
+  <span class="wm">δ 7.26</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 7.26</span><span class="d-rule"></span><span class="d-wit">residual CHCl₃ — every dataset has a solvent peak; start there</span></div>
+    <h2 class="lm rv"><span>Open what you have.<br>Process without ceremony.</span></h2>
+    <div class="wb-grid">
+      <div class="prose rv">
+        <p style="margin-top:24px">Most software asks you to convert or re-process before you may look. Resona reads processed Bruker pdata, NMRPipe FT files and Sparky .ucsf projects as you saved them — read-only, nothing is ever written back into your source folders — and then gets out of the way.</p>
+        <p>The processing dock turns raw Bruker FIDs into phased spectra; picking runs in positive, negative or both polarities; multiplets are classified and deconvolved against a kernel measured on the same spectrum; and in 2D and 3D, strips and projections follow your peaks across experiments.</p>
+        <div class="formats">
+          <div class="frow"><span class="f1">BRUKER</span><span class="f2">processed pdata 1r/2rr/3rrr · raw fid/ser preview · recipe adoption</span></div>
+          <div class="frow"><span class="f1">NMRPIPE</span><span class="f2">.ft / .ft1 / .ft2 frequency-domain files</span></div>
+          <div class="frow"><span class="f1">SPARKY</span><span class="f2">.ucsf 2D &amp; 3D + peak lists · orientation verified on load</span></div>
+        </div>
+      </div>
+      <!-- FIG. 1 · placeholder web demo (red = integral curve drawn on scroll).
+           Replace the .plot content below with a real program screenshot when ready. -->
+      <figure class="fig rv" style="--d:.12s">
+        <div class="plot"><svg id="wbSvg" viewBox="0 0 600 250" preserveAspectRatio="none" aria-label="Processed 1D spectrum with integral"></svg></div>
+        <figcaption><b>FIG. 1</b><span>¹H, processed and referenced in Resona. Integral drawn in red on scroll — the small everyday magic.</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 5.40 · DNMR ================= -->
+<section class="sec" id="dnmr">
+  <span class="wm">δ 5.40</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 5.40</span><span class="d-rule"></span><span class="d-wit">broadened, averaged, exchanging — dynamics live here</span></div>
+    <h2 class="lm rv"><span>Peaks move.<br>Measure how.</span></h2>
+    <p class="sec-lede rv">Three dynamic-NMR instruments in the DNMR menu, wired to the same engines your AI client calls. These are small working models — drag, and the fit follows.</p>
+
+    <figure class="dfig fig rv" style="margin-top:56px">
+      <div class="plot"><svg id="vtSvg" viewBox="0 0 1000 250" preserveAspectRatio="none"></svg></div>
+      <div class="controls"><label>Temperature</label><input type="range" id="vtR" min="240" max="340" value="252" step="1"><output id="vtV">252 K</output></div>
+      <div class="readout" id="vtOut">k_ex <b>14 s⁻¹</b> · ΔG‡ <b>51.4 kJ/mol</b> · slow exchange</div>
+      <figcaption><b>FIG. 2</b><span>VT lineshape, two-site Bloch–McConnell exchange. Warm the sample; watch coalescence arrive. This widget runs the same forward model as the program in the browser (illustrative parameters) — the program fits it globally over all temperatures, Eyring for k<sub>ex</sub> and van’t Hoff for populations, with a per-temperature table.</span></figcaption>
+    </figure>
+
+    <div class="duo">
+      <figure class="dfig fig rv">
+        <div class="plot"><svg id="titSvg" viewBox="0 0 500 250" preserveAspectRatio="none"></svg></div>
+        <div class="controls"><label>Ligand, equiv</label><input type="range" id="titR" min="0" max="12" value="0" step="0.2"><output id="titV">0.0</output></div>
+        <div class="readout" id="titOut">δ_obs <b>7.361</b> · K_d ≈ 2.2 mM</div>
+        <figcaption><b>FIG. 3</b><span>Titration — CSP tracking with a 1:1 exact-mass-balance fit (two-site, cooperative and sequential models available, ranked by AIC). Intermediate exchange goes to the Bloch–McConnell lineshape tab for Kd + k<sub>off</sub>.</span></figcaption>
+      </figure>
+      <figure class="dfig fig rv" style="--d:.1s">
+        <div class="plot"><svg id="rlxSvg" viewBox="0 0 500 250" preserveAspectRatio="none"></svg></div>
+        <div class="controls"><label>T₁ · inversion-recovery · 12 pts</label><button class="mini-btn" id="rlxBtn">Run fit</button></div>
+        <div class="readout" id="rlxOut">idle — series loaded</div>
+        <figcaption><b>FIG. 4</b><span>Relaxation — mono-exponential T₁/T₂/T₁rho from a Bruker series, Freeman–Hill form for HETCOR sequences.</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FILMS ================= -->
+<section class="sec" id="films" style="padding-top:0">
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">INTER-SCAN · NS = 3</span><span class="d-rule"></span><span class="d-wit">while the magnet settles, watch</span></div>
+    <h2 class="lm rv"><span>Three short recordings.</span></h2>
+    <div class="film-grid">
+      <!-- FILM 01 · paste the YouTube video ID into YT_TOUR in the script below (e.g. "dQw4w9WgXcQ").
+           The card then links to https://www.youtube.com/watch?v=ID and embeds on click. -->
+      <figure class="film big rv" data-yt="OGSUlPHz9oQ" data-title="Introducing Resona | The Modern, Easy-to-Use NMR Software">
+        <div class="still"><img src="https://i.ytimg.com/vi/OGSUlPHz9oQ/hqdefault.jpg" alt="Introducing Resona | The Modern, Easy-to-Use NMR Software"><span class="play"><svg viewBox="0 0 16 16"><path d="M3 1.5l11 6.5-11 6.5z"/></svg></span></div>
+        <div class="cap"><b>FILM 01 · YOUTUBE</b><span>Introducing Resona | The Modern, Easy-to-Use NMR Software</span><a class="yt-link" href="https://www.youtube.com/watch?v=OGSUlPHz9oQ" target="_blank" rel="noopener">YouTube ↗</a></div>
+      </figure>
+      <div class="film-col">
+        <!-- FILM 02 · paste ID into YT_GLYCAN -->
+        <figure class="film rv" data-yt="WWAK2kPSbLI" data-title="Resona Ep.2 - Seamless NMRPipe Processing (WSL2/macOS) &amp; Auto-Fit Guide">
+          <div class="still"><img src="https://i.ytimg.com/vi/WWAK2kPSbLI/hqdefault.jpg" alt="Resona Ep.2 - Seamless NMRPipe Processing (WSL2/macOS) &amp; Auto-Fit Guide"><span class="play"><svg viewBox="0 0 16 16"><path d="M3 1.5l11 6.5-11 6.5z"/></svg></span></div>
+          <div class="cap"><b>FILM 02 · YOUTUBE</b><span>Resona Ep.2 - Seamless NMRPipe Processing (WSL2/macOS) &amp; Auto-Fit Guide</span><a class="yt-link" href="https://www.youtube.com/watch?v=WWAK2kPSbLI" target="_blank" rel="noopener">YouTube ↗</a></div>
+        </figure>
+        <!-- FILM 03 · paste ID into YT_AGENT -->
+        <figure class="film rv" style="--d:.1s" data-yt="Sq44AiYWJgk" data-title="Advanced Dynamic NMR Analysis with Resona: VT-Fit &amp; Relaxation (T1/T2) Tutorial">
+          <div class="still"><img src="https://i.ytimg.com/vi/Sq44AiYWJgk/hqdefault.jpg" alt="Advanced Dynamic NMR Analysis with Resona: VT-Fit &amp; Relaxation (T1/T2) Tutorial"><span class="play"><svg viewBox="0 0 16 16"><path d="M3 1.5l11 6.5-11 6.5z"/></svg></span></div>
+          <div class="cap"><b>FILM 03 · YOUTUBE</b><span>Advanced Dynamic NMR Analysis with Resona: VT-Fit &amp; Relaxation (T1/T2) Tutorial</span><a class="yt-link" href="https://www.youtube.com/watch?v=Sq44AiYWJgk" target="_blank" rel="noopener">YouTube ↗</a></div>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 4.70 · GLYCAN (dark plate) ================= -->
+<section class="sec" id="glycan">
+  <span class="wm">δ 4.70</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 4.70</span><span class="d-rule"></span><span class="d-wit">the anomeric region — where glycans announce themselves</span></div>
+    <h2 class="lm rv" style="color:var(--dink)"><span>The anomeric region<br>is our home turf.</span></h2>
+    <p class="sec-lede rv" style="margin-bottom:56px"><span class="d-tag" style="border:1px solid var(--red);padding:3px 9px">THE FLAGSHIP</span></p>
+    <div class="gl-grid">
+      <div class="gl-side">
+      <!-- FIG. 5 · drop your figure as media/glycan-slex.png (dark background blends in).
+           While the file is missing, the schematic SVG below shows instead. -->
+      <figure class="gl-fig rv">
+        <div class="plot" id="glycanFigPlot">
+          <img src="media/glycan-slex.png" alt="sLeX SNFG cartoon — Neu5Ac–Gal–(Fuc–)GlcNAc–Gal" style="width:100%;height:auto;display:block" onload="document.getElementById('glycanSvgFallback').style.display='none'" onerror="this.style.display='none'">
+          <svg id="glycanSvgFallback" viewBox="0 0 340 372" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block" aria-label="Auto-assigned biantennary N-glycan">
+            <g stroke="#4a4752" stroke-width="1.3">
+              <line x1="170" y1="330" x2="170" y2="296"/><line x1="170" y1="278" x2="170" y2="244"/>
+              <line x1="162" y1="232" x2="116" y2="196"/><line x1="178" y1="232" x2="224" y2="196"/>
+              <line x1="110" y1="180" x2="110" y2="140"/><line x1="230" y1="180" x2="230" y2="140"/>
+              <line x1="110" y1="122" x2="110" y2="82"/><line x1="230" y1="122" x2="230" y2="82"/>
+              <line x1="239" y1="66" x2="262" y2="46"/><line x1="180" y1="288" x2="216" y2="300"/>
+            </g>
+            <g fill="none" stroke="#ede9dd" stroke-width="1.5">
+              <rect x="161" y="330" width="18" height="18"/><rect x="161" y="278" width="18" height="18"/>
+              <circle cx="170" cy="238" r="10"/><circle cx="110" cy="190" r="10"/><circle cx="230" cy="190" r="10"/>
+              <rect x="101" y="123" width="17" height="17"/><rect x="221" y="123" width="17" height="17"/>
+              <circle cx="110" cy="73" r="9"/><circle cx="230" cy="73" r="9"/>
+              <rect x="266" y="29" width="14" height="14" transform="rotate(45 273 36)"/>
+              <polygon points="228,299 238,315 218,315"/>
+            </g>
+            <g font-family="IBM Plex Mono" font-size="9" fill="#8f8b81">
+              <text x="188" y="344">3.55</text><text x="188" y="292">3.61</text><text x="188" y="242">3.72</text>
+              <text x="56" y="194">3.80</text><text x="246" y="194">3.69</text>
+              <text x="48" y="134">4.58</text><text x="246" y="134">4.54</text>
+              <text x="56" y="77">4.44</text><text x="246" y="77">4.47</text>
+              <text x="288" y="33">2.03</text><text x="244" y="316">1.23</text>
+            </g>
+            <circle cx="110" cy="73" r="15" fill="none" stroke="#ff6a42" stroke-dasharray="3 3"/>
+            <circle cx="230" cy="190" r="15" fill="none" stroke="#ff6a42" stroke-dasharray="3 3"/>
+            <g font-family="IBM Plex Mono" font-size="8.5" fill="#ff6a42">
+              <text x="42" y="52">assigned · 0.98</text><text x="248" y="212">assigned · 0.97</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>FIG. 5</b><span>sLeX–OEt, SNFG notation — residues, linkages and both ends at a glance.</span></figcaption>
+      </figure>
+      <!-- SNFG MINI BUILDER · same shapes/colors/condensed text as resona/glycan/sequence.py -->
+      <div class="snfg-mini rv" style="--d:.15s">
+        <header>TRY IT · SNFG MINI BUILDER<span>same shapes · colors · condensed text as Resona</span></header>
+        <div class="sn-presets" id="snPresets">
+          <button class="snbtn" data-preset="slex">sLeX–OEt</button>
+          <button class="snbtn" data-preset="lex">LeX–OEt</button>
+          <button class="snbtn" data-preset="lac">Lactose</button>
+          <button class="snbtn" data-preset="clear">Clear</button>
+        </div>
+        <div class="sn-plot"><svg id="snSvg" role="img" aria-label="SNFG cartoon builder"></svg></div>
+        <div class="sn-out"><code id="snCondensed">—</code><button class="snbtn" id="snCopy">COPY</button></div>
+        <div class="sn-ctl">
+          <div class="sn-row" id="snPal">
+            <label>RESIDUE</label>
+            <div class="sn-reswrap">
+              <button class="snbtn" id="snResBtn"><span id="snResDot" style="color:#FFD400">●</span> <span id="snResName">Gal</span> ▾</button>
+              <div class="sn-reslist" id="snResList"></div>
+            </div>
+            <button class="snbtn" data-ano="a">α</button>
+            <button class="snbtn on" data-ano="b">β</button>
+          </div>
+          <div class="sn-row">
+            <label>LINK</label>
+            <input id="snDonor" value="1" maxlength="2" title="donor atom on the new residue">
+            <span class="sn-arrow">→</span>
+            <input id="snAcc" value="4" maxlength="2" title="acceptor atom on the selected parent">
+            <label>END</label>
+            <select id="snAg" title="reducing-end aglycone"><option>OH</option><option>OMe</option><option selected>OEt</option><option>OAE</option></select>
+            <button class="snbtn" id="snAdd">ADD TO SELECTED</button>
+            <button class="snbtn" id="snApply">APPLY TO SELECTED</button>
+            <button class="snbtn" id="snDel">REMOVE</button>
+          </div>
+        </div>
+      </div>
+      </div>
+      <div class="gl-prose rv" style="--d:.12s">
+        <p>Glycan spectra are dense, overlapped, and unforgiving of guesswork — linkage and composition shift everything. Resona answers with evidence fusion: HSQC anchors, prediction-free TOCSY spin systems, a DUAL ring walk with HMBC bond votes, all scored against a measured-shift library with linkage increments and neighbour corrections. Your own measurements outrank the built-ins, and anything tied stays “?” for review.</p>
+        <ul class="gl-list">
+          <li><span class="dash">—</span><span><b>HSQC + HSQC-TOCSY + HMBC (+NOESY)</b> — full combo first, HSQC-only degrades gracefully to anchor-only.</span></li>
+          <li><span class="dash">—</span><span><b>Mixtures co-assigned</b> over linkage slots, labels suffixed −M1/−M2; folded methyls unfolded, never guessed.</span></li>
+          <li><span class="dash">—</span><span><b>SNFG cartoons, 1D simulation, qNMR</b> (two-molecule relative or absolute vs an internal standard) and Save-to-library in the same panel.</span></li>
+          <li><span class="dash">—</span><span><b>Review outputs, not verdicts:</b> repair log, anomeric top-3, unknowns — ambiguity flagged openly. No black boxes.</span></li>
+        </ul>
+        <div class="gl-stats">
+          <div><b>21<i>/</i>21</b><span>blind mixture check</span></div>
+          <div><b>300</b><span>glycan unit tests pass</span></div>
+          <div><b>5</b><span>experiments fused</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 3.62 · PROTEIN ================= -->
+<section class="sec" id="protein">
+  <span class="wm">δ 3.62</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 3.62</span><span class="d-rule"></span><span class="d-wit">the Hα region — the backbone walk passes through here</span></div>
+    <h2 class="lm rv"><span>Walk the backbone, faster.</span></h2>
+    <div class="pr-grid">
+      <div class="prose rv">
+        <p style="margin-top:24px">Protein assignment in Resona mechanises the strip reading you would do by hand — one spin system per HSQC root, carbon strips read in every bound 3D, systems scored at every sequence position and linked into chains by carbons that must agree in two strips. Weak evidence produces <i>abstained</i>, never a guess.</p>
+        <p>Predictions are a bounded prior, not a tolerance: leave the field empty and the bundled POTENCI random-coil predictor fills N/H/C/HA/HB (a user CSV always wins — and a structure-based CSV is the biggest accuracy lever). Placed rows become labels only through the review gate: approve or hold each candidate, preview the bindings, apply tentative labels, undo any time.</p>
+        <div class="formats" style="margin-top:24px">
+          <div class="frow"><span class="f1">INPUT</span><span class="f2">HSQC · HNCA · HN(CO)CA · CBCA(CO)NH (+HNCACB/CCONH) · one-letter sequence</span></div>
+          <div class="frow"><span class="f1">OUTPUT</span><span class="f2">placements.csv + report.json · tentative labels AAresnum:ATOM? [root n]</span></div>
+          <div class="frow"><span class="f1">POLICY</span><span class="f2">evidence over priors · abstain, never invent · human-gated apply</span></div>
+        </div>
+      </div>
+      <!-- FIG. 6 · real program screenshot: media/strips.png -->
+      <figure class="fig rv" style="--d:.12s">
+        <div class="plot" id="fig6Plot">
+          <img src="media/strips.png" alt="Carbon strip readout in Resona" style="width:100%;height:auto;display:block">
+        </div>
+        <figcaption><b>FIG. 6</b><span>Carbon strips in Resona — one trace per root, hits marked where the reader finds them.</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 2.50 · INTEGRATIONS ================= -->
+<section class="sec" id="integrations">
+  <span class="wm">δ 2.50</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 2.50</span><span class="d-rule"></span><span class="d-wit">residual DMSO — patient, dependable, gets along with everyone</span></div>
+    <h2 class="lm rv"><span>Old friends,<br>better manners.</span></h2>
+    <p class="sec-lede rv nowrap-lede">Resona doesn't replace NMRPipe. It makes it pleasant to live with.</p>
+    <div class="int-grid">
+      <div class="int-card rv">
+        <span class="k">PK 08 · NMRPIPE BRIDGE</span>
+        <h3>Pipe, without leaving the bench.</h3>
+        <p>Conversion and processing (fid.com / proc.com) with interactive P0/P1 and exact REDRAW re-runs, plus the nlinLS lineshape table flow — scripts editable, every command echoed to the terminal pane. Bring your own NMRPipe; Resona finds it and drives it.</p>
+        <p><b style="color:var(--ink)">Windows runs through WSL2 + tcsh; macOS and Linux run natively.</b> No Pipe is ever bundled.</p>
+        <div class="mini">WSL2 ON WINDOWS &nbsp;·&nbsp; NATIVE ON MAC/LINUX &nbsp;·&nbsp; 3D PROC.COM &nbsp;·&nbsp; REDRAW</div>
+      </div>
+      <div class="int-card rv" style="--d:.1s;padding:16px 16px 10px;gap:8px">
+        <span class="k">PK 08 · IN ACTION</span>
+        <div class="spec-video" style="border:1px solid var(--hair2);margin-top:8px">
+          <video src="media/nmrpipe_process.mp4" controls preload="metadata" playsinline style="width:100%;height:auto;display:block"></video>
+        </div>
+        <p style="font:italic 300 13px var(--body);color:var(--gray);margin:6px 0 0">NMRPipe, driven from Resona.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 1.18 · AGENTS ================= -->
+<section class="sec" id="agents">
+  <span class="wm">δ 1.18</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 1.18</span><span class="d-rule"></span><span class="d-wit">a fucose methyl — a small peak carrying outsized information</span></div>
+    <h2 class="lm rv"><span>A small add-on,<br>outsized information.</span></h2>
+    <div class="ag-grid">
+      <div class="ag-prose rv">
+        <p style="margin-top:22px">If you use an AI client — Claude Desktop, Cursor, or anything speaking MCP — it can run Resona for you. A small local server exposes 55 file-first tools that reach the same engines as the GUI: pick, deconvolve, integrate, VT/titration/relaxation fits, protein and glycan assignment, NMRPipe runs, batch and report writers.</p>
+        <p>Your AI reads the Markdown manuals on connection and learns the parameters itself. It reads and previews freely; applying labels needs your explicit go-ahead in chat — and everything runs on your machine, your spectra go nowhere.</p>
+        <div class="tools-line"><b>55 TOOLS, AMONG THEM —</b> pick_spectrum · multiplet_scan · deconvolve_1d · j_couplings_1d · integrate_1d · dnmr_extract_1d/slice · dnmr_vt_fit · titration_csp · relax_detect/fit · assign_protein · assign_glycan_from_handoff · nmrpipe_run · approve_candidate / hold_item / preview_apply / apply_labels (you confirm)</div>
+      </div>
+      <div class="rv" style="--d:.12s">
+        <div class="exchange">
+          <header>AN EXCHANGE, ABRIDGED</header>
+          <div class="turn you"><div class="who">You</div><p>“Open the glycan HSQC and assign it. Then fit the VT series and write me a report.”</p></div>
+          <div class="turn agent"><div class="who">Resona, through your agent</div>
+            <ol>
+              <li>→ open_glycan_handoff — spectra folder + sequence, checks re-run</li>
+              <li>→ assign_glycan_from_handoff · HSQC+TOCSY+HMBC fused</li>
+              <li>→ dnmr_extract_slice + dnmr_vt_fit · global Eyring/van't Hoff</li>
+              <li class="ok">✓ 21/21 blind mixture · kex + pB per T · report written — labels apply only after you confirm</li>
+            </ol>
+          </div>
+        </div>
+        <div class="cfg">
+          <button class="copy-btn" id="copyCfg">COPY</button>
+<pre id="mcpCfg"><span class="ck">// claude_desktop_config.json — point at the installed server, not the GUI exe</span>
+{
+  <span class="ck">"mcpServers"</span>: {
+    <span class="ck">"resona"</span>: {
+      <span class="ck">"command"</span>: <span class="cs">"C:\\Users\\you\\AppData\\Local\\Resona\\mcp\\ResonaMCP.exe"</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 0.60 · THE MAGNET LOUNGE ================= -->
+<section class="sec" id="extras">
+  <span class="wm">δ 0.60</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">D1 · 1.5 s</span><span class="d-rule"></span><span class="d-wit">the relaxation delay — the magnet is busy; you are not</span></div>
+    <h2 class="lm rv"><span>The Magnet Lounge.<br>Come back monthly.</span></h2>
+    <p class="sec-lede rv">A fresh calendar wallpaper every month — one δ per month — and a small game for the waits in between: processing, agent jobs, simulations.</p>
+    <div class="int-grid">
+      <div class="int-card rv">
+        <span class="k">CALENDAR WALLPAPERS · 4K PNG</span>
+        <h3>A month per δ, on your desktop.</h3>
+        <p>Each month carries a different δ section of this page, with the month's calendar and holidays. Pick dark or light, click to download.</p>
+        <div class="wp-list">
+          <div class="wp-row"><img loading="lazy" src="wallpapers/png/Resona-2026-10-October-dark.png" alt="Resona calendar wallpaper — October 2026"><span class="wl"><span class="wd">δ 8.30</span>October 2026</span><span class="wp-links"><a class="wp-dl" href="wallpapers/png/Resona-2026-10-October-dark.png" download>Dark ↓</a><a class="wp-dl" href="wallpapers/png/Resona-2026-10-October-light.png" download>Light ↓</a></span></div>
+          <div class="wp-row"><img loading="lazy" src="wallpapers/png/Resona-2026-11-November-dark.png" alt="Resona calendar wallpaper — November 2026"><span class="wl"><span class="wd">δ 7.26</span>November 2026</span><span class="wp-links"><a class="wp-dl" href="wallpapers/png/Resona-2026-11-November-dark.png" download>Dark ↓</a><a class="wp-dl" href="wallpapers/png/Resona-2026-11-November-light.png" download>Light ↓</a></span></div>
+          <div class="wp-row"><img loading="lazy" src="wallpapers/png/Resona-2026-12-December-dark.png" alt="Resona calendar wallpaper — December 2026"><span class="wl"><span class="wd">δ 5.40</span>December 2026</span><span class="wp-links"><a class="wp-dl" href="wallpapers/png/Resona-2026-12-December-dark.png" download>Dark ↓</a><a class="wp-dl" href="wallpapers/png/Resona-2026-12-December-light.png" download>Light ↓</a></span></div>
+          <div class="wp-row"><img loading="lazy" src="wallpapers/png/Resona-2027-01-January-dark.png" alt="Resona calendar wallpaper — January 2027"><span class="wl"><span class="wd">δ 4.70</span>January 2027</span><span class="wp-links"><a class="wp-dl" href="wallpapers/png/Resona-2027-01-January-dark.png" download>Dark ↓</a><a class="wp-dl" href="wallpapers/png/Resona-2027-01-January-light.png" download>Light ↓</a></span></div>
+          <div class="wp-row"><img loading="lazy" src="wallpapers/png/Resona-2027-02-February-dark.png" alt="Resona calendar wallpaper — February 2027"><span class="wl"><span class="wd">δ 3.62</span>February 2027</span><span class="wp-links"><a class="wp-dl" href="wallpapers/png/Resona-2027-02-February-dark.png" download>Dark ↓</a><a class="wp-dl" href="wallpapers/png/Resona-2027-02-February-light.png" download>Light ↓</a></span></div>
+        </div>
+        <div class="mini">3840 × 2160 PNG &nbsp;·&nbsp; CLICK DOWNLOADS THE FILE &nbsp;·&nbsp; NEW MONTHS SHIP WITH EACH RELEASE</div>
+      </div>
+      <div class="int-card rv" style="--d:.1s">
+        <span class="k">NMR SPACE WAR · SINGLE PLAY</span>
+        <h3>For the waits in between.</h3>
+        <p>Processing runs, the agent works its queue, the simulation spins — meanwhile, fly. A humorous NMR-themed space shooter, free with the site. Opens in a new tab; nothing to install.</p>
+        <div class="game-box">
+          <div class="gt">NMR <span>SPACE WAR</span></div>
+          <p>Single play · WASD + mouse · M toggles sound</p>
+          <a class="dl-btn" href="nmr_war.html" target="_blank" rel="noopener" style="text-decoration:none">Play now <span class="arr">→</span></a>
+        </div>
+        <div class="mini">RUNS OFFLINE &nbsp;·&nbsp; NEW TAB &nbsp;·&nbsp; M TOGGLES SOUND</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= δ 0.00 · DOWNLOAD ================= -->
+<section class="sec" id="download">
+  <span class="d-zero">δ 0.00</span>
+  <div class="wrap">
+    <div class="d-row rv"><span class="d-tag">δ 0.00</span><span class="d-rule"></span><span class="d-wit">TMS — the reference point; everything is measured against it</span></div>
+    <h2 class="lm rv"><span>The reference point.<br>Start here.</span></h2>
+    <p class="sec-lede rv">Three Windows packages on GitHub — pick by whether an AI agent will drive Resona on that machine. Free for non-commercial use; commercial use needs a licence. macOS dmg and Linux builds are on the way.</p>
+
+    <div class="os-tabs rv" role="tablist" aria-label="Operating system">
+      <button class="os-tab active" data-os="win" role="tab">Windows</button>
+      <button class="os-tab" data-os="mac" role="tab">macOS</button>
+      <button class="os-tab" data-os="lin" role="tab">Linux</button>
+    </div>
+
+    <!-- WINDOWS -->
+    <div class="os-panel active" data-os="win">
+      <div class="dl-grid">
+        <div class="spec-sheet">
+          <h4>Build sheet</h4>
+          <dl><dt>Version</dt><dd>v0.1.0</dd><dt>Released</dt><dd>October 2026</dd><dt>Requires</dt><dd>Windows 10/11 · x64 · per-user, no admin</dd></dl>
+          <ul><li>Two installers share one AppId — installing one over the other upgrades in place</li><li>NMRPipe optional — your own separate install</li><li>Docs (this manual) ship inside the install — Help menu</li><li>Python 3.12+ from source also works</li></ul>
+        </div>
+        <div class="dl-cards">
+          <div class="dl-card main"><span class="kind">Most users — app + agent server</span><h3>ResonaSetup-0.1.0.exe</h3>
+            <p>Application and the local MCP server together. Take this one if an AI agent will ever drive Resona on this machine.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="ResonaSetup-0.1.0.exe" href="https://github.com/all4nmr/resona-releases/releases/tag/v0.1.0">Download for Windows <span class="arr">↓</span></a>
+              <span class="file-line">ResonaSetup-0.1.0.exe — 104 MB · via GitHub resona-releases</span>
+            </div>
+          </div>
+          <div class="dl-card"><span class="kind">Lighter — app only</span><h3>ResonaAppSetup-0.1.0.exe</h3>
+            <p>Application only, no agent server. For machines where no AI agent will ever run. Saves ~36 MB.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="ResonaAppSetup-0.1.0.exe" href="https://github.com/all4nmr/resona-releases/releases/tag/v0.1.0">Download app only <span class="arr">↓</span></a>
+              <span class="file-line">ResonaAppSetup-0.1.0.exe — 68 MB · via GitHub resona-releases</span>
+            </div>
+          </div>
+          <div class="dl-card addon"><span class="kind">Agent machine — server only</span><h3>ResonaMCP-0.1.0-win64.zip</h3>
+            <p>The stdio MCP server alone, for a machine that runs the agent but not the GUI. A server, not a program — your AI client spawns it; launching it by hand looks hung, which is correct.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="ResonaMCP-0.1.0-win64.zip" href="https://github.com/all4nmr/resona-releases/releases/tag/v0.1.0">Download AI server <span class="arr">↓</span></a>
+              <span class="file-line">ResonaMCP-0.1.0-win64.zip — 54 MB · via GitHub resona-releases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MACOS · app dmg (no AI server) + MCP server zip, both landing in resona-releases -->
+    <div class="os-panel" data-os="mac">
+      <div class="dl-grid">
+        <div class="spec-sheet">
+          <h4>Build sheet</h4>
+          <dl><dt>Version</dt><dd>v0.1.0</dd><dt>Status</dt><dd>In preparation — unsigned dmg</dd><dt>Requires</dt><dd>macOS 14 · arm64</dd></dl>
+          <ul><li>App and AI server ship as two separate files</li><li>Unsigned: first launch needs right-click → Open once</li><li>NMRPipe, if used, runs natively (tcsh)</li></ul>
+        </div>
+        <div class="dl-cards">
+          <div class="dl-card main"><span class="kind">The app (no AI server)</span><h3>Resona-0.1.0-mac-arm64.dmg</h3>
+            <p>The application by itself. If an AI client will drive Resona on this Mac, also take the server file below.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="Resona-0.1.0-mac-arm64.dmg" href="https://github.com/all4nmr/resona-releases/releases">Download for macOS <span class="arr">↓</span></a>
+              <span class="file-line">Resona-0.1.0-mac-arm64.dmg — coming to GitHub resona-releases</span>
+            </div>
+          </div>
+          <div class="dl-card addon"><span class="kind">AI server only</span><h3>ResonaMCP-0.1.0-mac-arm64.zip</h3>
+            <p>The local server your AI client spawns. Unzip next to the app and point the client at it — launching it by hand looks hung, which is correct.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="ResonaMCP-0.1.0-mac-arm64.zip" href="https://github.com/all4nmr/resona-releases/releases">Download AI server <span class="arr">↓</span></a>
+              <span class="file-line">ResonaMCP-0.1.0-mac-arm64.zip — coming to GitHub resona-releases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LINUX · build in preparation -->
+    <div class="os-panel" data-os="lin">
+      <div class="dl-grid">
+        <div class="spec-sheet">
+          <h4>Build sheet</h4>
+          <dl><dt>Version</dt><dd>v0.1.0</dd><dt>Status</dt><dd>In preparation</dd><dt>Requires</dt><dd>x86_64</dd></dl>
+          <ul><li>App and AI server as separate files, like macOS</li><li>NMRPipe, if used, runs natively — no VM</li></ul>
+        </div>
+        <div class="dl-cards">
+          <div class="dl-card main"><span class="kind">In preparation</span><h3>Resona for Linux</h3>
+            <p>The Linux build lands in resona-releases next to the Windows packages. Watch the releases page.</p>
+            <div class="dl-row">
+              <a class="dl-btn" data-file="Resona linux build" href="https://github.com/all4nmr/resona-releases/releases">Notify me on release <span class="arr">↓</span></a>
+              <span class="file-line">coming to GitHub resona-releases</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dl-notes rv">
+      <span><b>Licence</b> — free for non-commercial use only; commercial use needs a paid licence. Reverse engineering and redistribution prohibited.</span>
+      <span><b>Not bundled</b> — NMRPipe needs its own install.</span>
+      <span><b>Privacy</b> — processing, fitting, assignment and the MCP server all run on your machine.</span>
+      <span><b>v0.1.0</b> — first public release.</span>
+    </div>
+
+    <div class="faq rv">
+      <h3>Questions, briefly answered</h3>
+      <div class="qa"><button class="q">Which package do I download?<i>+</i></button>
+        <div class="a"><div><b>ResonaSetup-0.1.0.exe</b> (104 MB) if an AI agent will ever drive Resona on that machine — most users. <b>ResonaAppSetup</b> (68 MB) if never. <b>ResonaMCP zip</b> (54 MB) for an agent-only machine. The two installers share one AppId, so switching is an upgrade in place.</div></div></div>
+      <div class="qa"><button class="q">Do I need NMRPipe installed?<i>+</i></button>
+        <div class="a"><div>Only for the Pipe bridge — and it is never bundled. Install NMRPipe separately; Resona detects it and drives fid.com / proc.com from the panel. On <b>Windows that needs WSL2 + tcsh</b>; macOS and Linux run natively. Everything else stands alone.</div></div></div>
+      <div class="qa"><button class="q">What is the AI server, exactly?<i>+</i></button>
+        <div class="a"><div>A local stdio server (55 tools) with the <b>.md manuals</b> agents read on connection — same engines as the GUI, file-first, no GUI required. Review and preview are free; <b>applying labels needs your explicit confirmation</b> (human_confirmed + a statement). Studio runs fine without it. Point your client at <b>ResonaMCP.exe</b>, never at the GUI exe.</div></div></div>
+      <div class="qa"><button class="q">Which files can I open?<i>+</i></button>
+        <div class="a"><div><b>Processed</b> Bruker pdata (1r/2rr/3rrr, with a raw-FID preview for unprocessed folders), NMRPipe frequency-domain files (.ft/.ft1/.ft2), and Sparky <b>.ucsf</b> 2D/3D with peak lists. Read-only — your source folders are never written to. Projects save as small portable <b>.resona.json</b> sidecars.</div></div></div>
+      <div class="qa"><button class="q">Does Resona assign on its own?<i>+</i></button>
+        <div class="a"><div>No — it <b>proposes</b>. Protein placements and glycan rows stay tentative until you approve them in the review gate (approve/hold → preview → apply → undo). Weak evidence yields <b>abstained / “?”</b>, never a guess. The agent may prepare a preview but must not apply without your go-ahead.</div></div></div>
+      <div class="qa"><button class="q">Does Resona send my data anywhere?<i>+</i></button>
+        <div class="a"><div>No. Processing, fitting, assignment, and the MCP server all run <b>locally</b>. Your spectra never leave your machine — and the operator contract forbids sending unpublished data to external APIs by default.</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <div class="ft-grid">
+      <div class="ft-brand">
+        <a class="brand" href="#top" style="text-decoration:none">Resona<small>NMR STUDIO</small></a>
+        <p>One bench for the whole experiment — from the FID to the figure.</p>
+      </div>
+      <div class="ft-col"><h5>Along the axis</h5>
+        <a href="#capabilities">δ 8.30 — Peak table</a><a href="#overview">δ 7.26 — The bench</a><a href="#dnmr">δ 5.40 — DNMR</a><a href="#glycan">δ 4.70 — Glycan</a><a href="#agents">δ 1.18 — Agents</a></div>
+      <div class="ft-col"><h5>Resources</h5>
+        <a href="#agents">AI-agent setup</a><a href="#agents">Agent manuals (.md)</a><a href="#films">Films (YouTube)</a><a href="#extras">Magnet Lounge — wallpapers &amp; game</a><a href="https://github.com/all4nmr/resona-releases/releases">Release notes</a><a href="https://github.com/all4nmr/resona-nmr-studio">Source repo</a></div>
+      <div class="ft-col"><h5>Correspondence</h5>
+        <a href="mailto:all4nmr@gmail.com">all4nmr@gmail.com</a><a href="https://x.com/Resona_NMR">X · @Resona_NMR</a><a href="https://www.youtube.com/@Resona-nmr">YouTube · Resona</a><a href="https://github.com/all4nmr/resona-releases">GitHub · resona-releases</a><a href="https://github.com/all4nmr/resona-nmr-studio">GitHub · source</a><a href="#download">Licence (non-commercial free)</a></div>
+    </div>
+    <div class="ft-bottom">
+      <span>© <span id="yr">2026</span> RESONA SCIENTIFIC — SET IN BRICOLAGE GROTESQUE &amp; SPECTRAL.</span>
+      <span>ALL SHIFTS REFERENCED TO TMS AT δ 0.00.</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" role="status"></div>
+
+<script>
+(function(){
+"use strict";
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $  = (s,c)=>(c||document).querySelector(s);
+const $$ = (s,c)=>Array.from((c||document).querySelectorAll(s));
+let tt; function toast(html){const t=$('#toast');t.innerHTML=html;t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3200);}
+
+/* nav */
+$('#burger').addEventListener('click',()=>document.body.classList.toggle('menu-open'));
+$$('#mnav a').forEach(a=>a.addEventListener('click',()=>document.body.classList.remove('menu-open')));
+
+/* reveals */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+$$('.rv').forEach(el=>io.observe(el));
+
+/* ---------- HERO SPECTRUM (navigation) ---------- */
+const HW=1200, HH=360, HBASE=322, HAMP=268;
+const secPeaks=[
+  {d:8.30,h:.80,w:.015,t:'The Peak Table',id:'capabilities'},
+  {d:7.26,h:.95,w:.017,t:'The Bench',id:'overview'},
+  {d:5.40,h:.68,w:.030,t:'Dynamic NMR',id:'dnmr'},
+  {d:4.70,h:1.00,w:.016,t:'Glycan — flagship',id:'glycan'},
+  {d:3.62,h:.60,w:.014,t:'Protein',id:'protein'},
+  {d:2.50,h:.66,w:.015,t:'Integrations',id:'integrations'},
+  {d:1.18,h:.50,w:.013,t:'AI agents',id:'agents'}];
+const noisePk=[[9.1,.14],[8.6,.12],[6.9,.2],[6.3,.15],[5.05,.18],[4.2,.2],[3.35,.18],[2.9,.17],[2.1,.22],[1.6,.18],[0.85,.24],[0.2,.1]];
+const dx=d=> (10-d)/10*HW;
+function lorentz(f,c,w){const dd=(f-c)/w;return 1/(1+dd*dd);}
+function specH(d){let y=0;for(const p of secPeaks)y+=p.h*lorentz(d,p.d,p.w);
+  for(const [c,h] of noisePk)y+=h*lorentz(d,c,.007);return Math.min(y,1.1);}
+const heroSvg=$('#heroSvg'),heroPlot=$('#heroPlot'),heroLabels=$('#heroLabels');
+if(heroSvg){
+  let dPath='M 0 '+HBASE;
+  for(let x=0;x<=HW;x+=2){dPath+=' L '+x+' '+(HBASE-specH(10-x/HW*10)*HAMP).toFixed(1);}
+  dPath+=' L '+HW+' '+HBASE;
+  let leaders='';
+  for(const p of secPeaks){const x=dx(p.d),yT=HBASE-p.h*HAMP;
+    leaders+='<line x1="'+x+'" y1="'+(yT-8)+'" x2="'+x+'" y2="44" stroke="#c2bdad" stroke-dasharray="2 4"/>';}
+  heroSvg.innerHTML='<line x1="0" y1="'+HBASE+'" x2="'+HW+'" y2="'+HBASE+'" stroke="#191817" stroke-width="1.5"/>'+
+    leaders+'<path id="hTrace" d="'+dPath+'" fill="none" stroke="#191817" stroke-width="1.6"/>';
+  /* labels */
+  for(const p of secPeaks){
+    const a=document.createElement('a');
+    a.className='splab';a.href='#'+p.id;
+    a.style.left=(dx(p.d)/HW*100)+'%';
+    a.innerHTML='<i>δ '+p.d.toFixed(2)+'</i><b>'+p.t+'</b>';
+    a.addEventListener('mouseenter',()=>{const dot=$('#pkDot');
+      dot.style.left=(dx(p.d)/HW*100)+'%';dot.style.top=((HBASE-p.h*HAMP)/HH*100)+'%';dot.style.opacity=1;});
+    a.addEventListener('mouseleave',()=>{$('#pkDot').style.opacity=0;});
+    heroLabels.appendChild(a);
+  }
+  /* axis ticks */
+  const ax=$('#heroAxis');
+  for(let k=0;k<=10;k++){const s=document.createElement('span');s.textContent=k;
+    s.style.left=((10-k)/10*96+2)+'%';ax.insertBefore(s,ax.querySelector('.axname'));}
+  /* draw-on */
+  const tr=$('#hTrace');
+  if(!RM){const len=tr.getTotalLength();tr.style.strokeDasharray=len;tr.style.strokeDashoffset=len;
+    tr.getBoundingClientRect();tr.style.transition='stroke-dashoffset 2.8s cubic-bezier(.3,.5,.2,1)';
+    requestAnimationFrame(()=>tr.style.strokeDashoffset='0');}
+  /* crosshair readout */
+  const xh=$('#xh'),xhTag=$('#xhTag');
+  heroPlot.addEventListener('pointermove',e=>{
+    if(e.target.closest('.splab'))return;
+    const r=heroPlot.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width;
+    if(fx<0||fx>1)return;
+    xh.style.opacity=.35;xhTag.style.opacity=1;
+    xh.style.left=(fx*100)+'%';xhTag.style.left=Math.min(Math.max(fx*100,5),95)+'%';
+    xhTag.textContent='δ '+(10-fx*10).toFixed(2);
+  });
+  heroPlot.addEventListener('pointerleave',()=>{xh.style.opacity=0;xhTag.style.opacity=0;});
+  /* pick tool */
+  let picks=0;
+  heroPlot.addEventListener('click',e=>{
+    if(e.target.closest('.splab'))return;
+    const r=heroPlot.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width;
+    if(fx<=0||fx>=1)return;
+    const el=document.createElement('div');el.className='pick';el.style.left=(fx*100)+'%';
+    el.innerHTML='<span class="pl"></span><span class="pt">δ '+(10-fx*10).toFixed(2)+'</span>';
+    heroPlot.appendChild(el);picks++;$('#pkCount').textContent=picks;
+  });
+  heroPlot.addEventListener('dblclick',()=>{
+    $$('.pick',heroPlot).forEach(p=>p.remove());picks=0;$('#pkCount').textContent=0;});
+}
+
+/* ---------- δ RAIL ---------- */
+const rail=$('#rail'),railStops=$('#railStops'),railCursor=$('#railCursor'),railDelta=$('#railDelta'),navDelta=$('#navDelta');
+const railSecs=['capabilities','overview','dnmr','glycan','protein','integrations','agents','download']
+  .map(id=>({id,delta:parseFloat(id==='download'?0:document.getElementById(id)?getComputedStyle(document.getElementById(id)).getPropertyValue('--x')||0:0)}));
+const secDelta={capabilities:8.30,overview:7.26,dnmr:5.40,glycan:4.70,protein:3.62,integrations:2.50,agents:1.18,extras:0.60,download:0};
+let anchors=[];
+function buildRail(){
+  if(!rail)return;
+  rail.querySelectorAll('.rail-tick,.rail-stop').forEach(n=>n.remove());
+  const H=rail.clientHeight;
+  for(let k=0;k<=10;k++){const t=document.createElement('div');t.className='rail-tick';
+    t.style.top=(k/10*100)+'%';t.innerHTML='<span>'+k+'</span>';rail.appendChild(t);}
+  anchors=[{p:0,delta:10}];
+  for(const id of Object.keys(secDelta)){
+    const el=document.getElementById(id);if(!el)continue;
+    const p=Math.min(1,Math.max(0,el.offsetTop/(document.documentElement.scrollHeight-innerHeight)));
+    const s=document.createElement('div');s.className='rail-stop';s.style.top='calc('+p*100+'% - 4px)';rail.appendChild(s);
+    anchors.push({p,delta:secDelta[id]});
+  }
+  anchors.push({p:1,delta:0});anchors.sort((a,b)=>a.p-b.p);
+}
+function deltaAt(p){
+  for(let i=0;i<anchors.length-1;i++){
+    if(p>=anchors[i].p&&p<=anchors[i+1].p){
+      const a=anchors[i],b=anchors[i+1],t=(p-a.p)/((b.p-a.p)||1);
+      return a.delta+(b.delta-a.delta)*t;}}
+  return p<.5?10:0;
+}
+function onScroll(){
+  if(!rail)return;
+  const max=document.documentElement.scrollHeight-innerHeight;
+  const p=Math.min(1,Math.max(0,scrollY/max));
+  railCursor.style.top='calc('+p*100+'% - 6px)';
+  const d=deltaAt(p).toFixed(2);
+  railDelta.textContent='δ '+d;navDelta.textContent='δ '+d;
+  const g=$('#glycan');
+  if(g){const r=g.getBoundingClientRect();
+    rail.classList.toggle('invert',r.top<innerHeight*.5&&r.bottom>innerHeight*.5);}
+}
+if(rail){buildRail();addEventListener('resize',()=>{buildRail();onScroll();});
+  addEventListener('scroll',onScroll,{passive:true});onScroll();}
+
+/* ---------- FIG.1 workbench trace + integral ---------- */
+const wbSvg=$('#wbSvg');
+if(wbSvg){
+  const wPk=[[7.26,.5,.012],[4.12,.7,.014],[2.05,.95,.016],[1.26,.65,.015]];
+  const y=f=>{let v=0;for(const[c,h,w]of wPk)v+=h*lorentz(f,c,w);return 218-Math.min(v,1.05)*168;};
+  let d='M 0 218';for(let x=0;x<=600;x+=2)d+=' L '+x+' '+y(x/600*10).toFixed(1);d+=' L 600 218';
+  /* integral: cumulative area approximation */
+  let acc=0,pts=[];const tot=600;
+  for(let x=0;x<=tot;x+=3){let v=0;for(const[c,h,w]of wPk)v+=h*lorentz(x/tot*10,c,w);acc+=v;
+    pts.push([x,196-Math.min(acc/230,1)*120]);}
+  let dI='M '+pts[0][0]+' '+pts[0][1].toFixed(1);
+  for(const[x,yy]of pts)dI+=' L '+x+' '+yy.toFixed(1);
+  wbSvg.innerHTML='<line x1="0" y1="218" x2="600" y2="218" stroke="#c2bdad"/>'+
+    '<path d="'+d+'" fill="none" stroke="#191817" stroke-width="1.5"/>'+
+    '<path id="wbInt" d="'+dI+'" fill="none" stroke="#d0401d" stroke-width="1.4"/>'+
+    '<text x="12" y="20" font-family="IBM Plex Mono" font-size="9" fill="#9a958a">δ 10 → 0</text>';
+  const ip=$('#wbInt'),il=ip.getTotalLength();
+  ip.style.strokeDasharray=il;ip.style.strokeDashoffset=RM?0:il;
+  new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){
+    ip.style.transition='stroke-dashoffset 2.2s ease';ip.style.strokeDashoffset='0';o.disconnect();}})},{threshold:.4}).observe(wbSvg);
+}
+
+/* ---------- FIG.2 VT ---------- */
+const vtSvg=$('#vtSvg'),vtR=$('#vtR');
+/* ---------- FIG.2 VT — same equations as resona/dnmr: two-site Bloch–McConnell
+   forward model, Eyring kex(T), van't Hoff pB(T). Illustrative parameters. */
+const VT_SEP=60,VT_W=5,VT_DHA=65000,VT_DSA=15,VT_DH0=12400,VT_DS0=31.3;
+const VT_KC=Math.PI*VT_SEP/Math.SQRT2,VT_R=8.314,VT_SCL=3000;
+const vtKex=T=>2.0836619e10*T*Math.exp(VT_DSA/VT_R)*Math.exp(-VT_DHA/(VT_R*T));
+const vtPB=T=>{const K=Math.exp(-(VT_DH0-T*VT_DS0)/(VT_R*T));return K/(1+K);};
+function vtBM(xHz,k,pB){
+  const pA=1-pB,kAB=k*pB,kBA=k*pA,Rc=Math.PI*VT_W;
+  const w=xHz*2*Math.PI,wA=VT_SEP/2*2*Math.PI,wB=-VT_SEP/2*2*Math.PI;
+  const a=Rc+kAB,b=wA-w,c=Rc+kBA,d=wB-w;
+  const dr=a*c-b*d-kAB*kBA,di=a*d+b*c;
+  const nr=pA*(c+kAB)+pB*(a+kBA),ni=pA*d+pB*b;
+  return (nr*dr+ni*di)/(dr*dr+di*di);
+}
+function drawVT(T){
+  const k=vtKex(T),pb=vtPB(T),kk=k/VT_KC;
+  const y=xHz=>226-Math.min(Math.max(vtBM(xHz,k,pb),0)*VT_SCL,195);
+  let d='M 0 226';for(let x=0;x<=1000;x+=4){const hz=-95+190*x/1000;d+=' L '+x+' '+y(hz).toFixed(1);}d+=' L 1000 226';
+  vtSvg.innerHTML='<line x1="0" y1="226" x2="1000" y2="226" stroke="#c2bdad"/><path d="'+d+'" fill="none" stroke="#191817" stroke-width="1.5"/>';
+  $('#vtV').textContent=T+' K';
+  $('#vtOut').innerHTML='k_ex <b>'+(k<10?k.toFixed(1):Math.round(k))+' s⁻¹</b> · k/kc <b>'+kk.toFixed(2)+'</b> · pB <b>'+(100*pb).toFixed(1)+'%</b> · ΔG⁰₂₉₈ <b>3.1 kJ/mol</b> · '+(kk<0.3?'slow exchange':kk<3?'intermediate — coalescence':'fast exchange');
+}
+if(vtR){vtR.addEventListener('input',()=>drawVT(+vtR.value));drawVT(+vtR.value);}
+
+/* ---------- FIG.3 titration ---------- */
+const titSvg=$('#titSvg'),titR=$('#titR'),KD=2.2,DM=.85;
+const tX=e=>26+e/12*448,tY=v=>208-v/DM*150,iso=e=>e/(KD+e)*DM;
+if(titSvg){
+  let d='M'+tX(0)+' '+tY(iso(0)).toFixed(1);
+  for(let e=.1;e<=12;e+=.1)d+=' L'+tX(e).toFixed(1)+' '+tY(iso(e)).toFixed(1);
+  let dots='';for(let e=0;e<=12;e++)dots+='<circle class="tdot" data-e="'+e+'" cx="'+tX(e).toFixed(1)+'" cy="'+tY(iso(e)).toFixed(1)+'" r="2.6" fill="#191817" opacity=".12"/>';
+  titSvg.innerHTML='<line x1="26" y1="208" x2="474" y2="208" stroke="#c2bdad"/><line x1="26" y1="30" x2="26" y2="208" stroke="#c2bdad"/>'+
+    '<path d="'+d+'" fill="none" stroke="#9a958a" stroke-width="1.2"/>'+dots+
+    '<circle id="tRing" cx="'+tX(0)+'" cy="'+tY(0)+'" r="9" fill="none" stroke="#d0401d" stroke-dasharray="3 3"/>'+
+    '<circle id="tMark" cx="'+tX(0)+'" cy="'+tY(0)+'" r="4" fill="#d0401d"/>'+
+    '<text x="420" y="228" font-family="IBM Plex Mono" font-size="10" fill="#9a958a">equiv →</text>'+
+    '<text x="32" y="42" font-family="IBM Plex Mono" font-size="10" fill="#9a958a">δ_obs →</text>';
+  const upd=e=>{e=+e;const v=iso(e),x=tX(e),y=tY(v);
+    $('#tMark').setAttribute('cx',x);$('#tMark').setAttribute('cy',y);
+    $('#tRing').setAttribute('cx',x);$('#tRing').setAttribute('cy',y);
+    $$('.tdot',titSvg).forEach(c=>c.setAttribute('opacity',+c.dataset.e<=e?'.85':'.12'));
+    $('#titV').textContent=e.toFixed(1);
+    $('#titOut').innerHTML='δ_obs <b>'+(7.361+v*.35).toFixed(3)+'</b> · 1:1 exact · K_d ≈ 2.2 mM · compare models by AIC';};
+  titR.addEventListener('input',()=>upd(titR.value));upd(0);
+}
+
+/* ---------- FIG.4 relaxation ---------- */
+const rlxSvg=$('#rlxSvg'),rlxBtn=$('#rlxBtn');
+if(rlxSvg){
+  const pts=Array.from({length:12},(_,i)=>({t:i*.18,I:Math.exp(-i*.18/.7)+Math.sin(i*7.3)*.03}));
+  const X=t=>26+t/2.1*448,Y=v=>208-v*150;
+  let fit='M'+X(0)+' '+Y(1).toFixed(1);
+  for(let i=1;i<=120;i++){const t=i/120*2.1;fit+=' L'+X(t).toFixed(1)+' '+Y(Math.exp(-t/.7)).toFixed(1);}
+  let marks='';pts.forEach((p,i)=>{marks+='<rect class="rpt" x="'+(X(p.t)-3)+'" y="'+(Y(p.I)-3)+'" width="6" height="6" fill="#191817" opacity="0"/>';});
+  rlxSvg.innerHTML='<line x1="26" y1="208" x2="474" y2="208" stroke="#c2bdad"/><line x1="26" y1="30" x2="26" y2="208" stroke="#c2bdad"/>'+
+    '<path id="rfit" d="'+fit+'" fill="none" stroke="#d0401d" stroke-width="1.3"/>'+marks+
+    '<text x="420" y="228" font-family="IBM Plex Mono" font-size="10" fill="#9a958a">τ (s) →</text>';
+  const path=$('#rfit'),len=path.getTotalLength();
+  path.style.strokeDasharray=len;path.style.strokeDashoffset=RM?0:len;
+  if(RM)$$('.rpt',rlxSvg).forEach(r=>r.setAttribute('opacity','.85'));
+  const run=()=>{
+    if(RM){$('#rlxOut').innerHTML='T<sub>1</sub> <b>0.70 s</b> · R² 0.998 · mono-exponential';return;}
+    path.style.transition='none';path.style.strokeDashoffset=len;
+    $$('.rpt',rlxSvg).forEach(r=>r.setAttribute('opacity','0'));
+    $('#rlxOut').textContent='fitting — least squares, 12 points…';
+    path.getBoundingClientRect();
+    path.style.transition='stroke-dashoffset 1.4s ease';path.style.strokeDashoffset='0';
+    $$('.rpt',rlxSvg).forEach((r,i)=>setTimeout(()=>r.setAttribute('opacity','.85'),i*110));
+    setTimeout(()=>{$('#rlxOut').innerHTML='T<sub>1</sub> <b>0.70 s</b> · R² 0.998 — mono-exponential, tail points dropped';rlxBtn.textContent='Refit';},1500);
+  };
+  rlxBtn.addEventListener('click',run);
+  new IntersectionObserver((es,o)=>{es.forEach(e=>{if(e.isIntersecting){setTimeout(run,600);o.disconnect();}})},{threshold:.4}).observe(rlxSvg);
+}
+
+/* tabs */
+$$('.os-tab').forEach(b=>b.addEventListener('click',()=>{
+  $$('.os-tab').forEach(x=>x.classList.remove('active'));
+  $$('.os-panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');$('.os-panel[data-os="'+b.dataset.os+'"]').classList.add('active');}));
+
+/* download buttons — real GitHub release URLs; toast only for placeholder hrefs */
+$$('.dl-btn').forEach(a=>a.addEventListener('click',e=>{
+  const href=a.getAttribute('href')||'';
+  if(!href||href==='#'){e.preventDefault();
+    toast('Build not published yet — it will land as <b>'+a.dataset.file+'</b> in resona-releases');}
+}));
+
+/* faq */
+$$('.qa .q').forEach(q=>q.addEventListener('click',()=>{
+  const qa=q.parentElement,a=qa.querySelector('.a'),open=qa.classList.contains('open');
+  $$('.qa').forEach(x=>{x.classList.remove('open');x.querySelector('.a').style.maxHeight=0;});
+  if(!open){qa.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}}));
+
+/* copy */
+$('#copyCfg').addEventListener('click',()=>{
+  const t=$('#mcpCfg').textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(
+    ()=>toast('AI-server configuration <b>copied</b>.'),
+    ()=>toast('Clipboard unavailable — copy by hand.'));});
+
+/* films — YouTube: paste the three video IDs once here after uploading.
+   Each card embeds its video on click; until then it shows a neat placeholder. */
+const YT_TOUR='OGSUlPHz9oQ',YT_GLYCAN='WWAK2kPSbLI',YT_AGENT='Sq44AiYWJgk';
+(function initFilms(){
+  const ids=[YT_TOUR,YT_GLYCAN,YT_AGENT];
+  $$('.film').forEach((f,i)=>{
+    const id=(ids[i]||'').trim();
+    if(id&&!/^PASTE_/.test(id)){f.dataset.yt=id;}
+  });
+})();
+$$('.film').forEach(f=>f.addEventListener('click',(e)=>{
+  if(e.target.closest('a'))return; /* the "YouTube ↗" link navigates instead of embedding */
+  if(f.dataset.done)return;f.dataset.done=1;
+  const id=(f.dataset.yt||'').trim();
+  if(id){
+    f.querySelector('.still').innerHTML='<iframe width="100%" height="100%" style="aspect-ratio:16/9;border:0" src="https://www.youtube.com/embed/'+encodeURIComponent(id)+'?rel=0" title="'+(f.dataset.title||'Resona film')+'" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+  }else{
+    f.querySelector('.still').innerHTML='<div class="film-empty"><span>YOUTUBE SLOT — '+(f.dataset.title||'film')+'</span><span>upload the recording, then paste its ID into <b>YT_TOUR / YT_GLYCAN / YT_AGENT</b></span><span>— see the HTML comment above this figure —</span></div>';}}));
+
+/* hero video — click toggles controls */
+const hv=$('#heroVideo');
+if(hv){hv.addEventListener('click',()=>{if(hv.hasAttribute('controls'))hv.removeAttribute('controls');else hv.setAttribute('controls','');});}
+
+$('#yr').textContent=new Date().getFullYear();
+})();
+</script>
+<script>
+/* ---------- SNFG MINI BUILDER (ports resona/glycan/sequence.py: SNFG map + condensed()) ---------- */
+(function(){
+"use strict";
+const SNFG={Glc:["circle","#0090D4"],Man:["circle","#00A651"],Gal:["circle","#FFD400"],GlcNAc:["square","#0090D4"],GalNAc:["square","#FFD400"],ManNAc:["square","#00A651"],Fuc:["triangle","#ED1C24"],Rha:["triangle","#7AC5E0"],Xyl:["star","#FF8600"],GlcA:["diamond","#0090D4"],GalA:["diamond","#FFD400"],IdoA:["diamond","#C49A6C"],Neu5Ac:["diamond","#A54399"],Neu5Gc:["diamond","#A54399"],Kdo:["octagon","#005730"],GlcN:["square","#7AC5E0"]};
+const DX=108,DY=64,R=16,TOP=42,SIDE=64,ENDW=120;
+let uid=1,root=null,selId=null,pendRes="Gal",pendAno="b",leaf=0,maxD=0;
+const svg=document.getElementById("snSvg"),out=document.getElementById("snCondensed");
+const donorEl=document.getElementById("snDonor"),accEl=document.getElementById("snAcc"),agEl=document.getElementById("snAg");
+function mk(name,anomer,donor,acceptor,ag){return {id:uid++,name:name,anomer:anomer,donor:donor,acceptor:acceptor,aglycone:ag||"OH",children:[],parent:null};}
+function kid(p,c){c.parent=p;p.children.push(c);return c;}
+function find(n,id){if(n.id===id)return n;for(const c of n.children){const f=find(c,id);if(f)return f;}return null;}
+function cBranch(n){const a=n.anomer==="a"?"a":"b";
+  const kids=n.children.slice(1).map(c=>"["+cBranch(c)+"]").join("");
+  const first=n.children.length?cBranch(n.children[0]):"";
+  return first+kids+n.name+"("+a+n.donor+"-"+(n.acceptor||"?")+")";}
+function cRoot(n){const a=n.anomer==="a"?"a":"b";
+  const own=n.name+"("+a+"-"+(n.aglycone||"OH")+")";
+  const kids=n.children.slice(1).map(c=>"["+cBranch(c)+"]").join("");
+  const first=n.children.length?cBranch(n.children[0]):"";
+  return (first||kids)?first+kids+own:own;}
+function walk(n,d){n._d=d;if(d>maxD)maxD=d;
+  if(!n.children.length){n._y=leaf++;}
+  else{n.children.forEach(c=>walk(c,d+1));n._y=(n.children[0]._y+n.children[n.children.length-1]._y)/2;}}
+function starPts(cx,cy,r){const p=[];for(let i=0;i<10;i++){const rr=i%2?r*0.45:r,a=-Math.PI/2+i*Math.PI/5;
+  p.push((cx+rr*Math.cos(a)).toFixed(1)+","+(cy+rr*Math.sin(a)).toFixed(1));}return p.join(" ");}
+function octPts(cx,cy,r){const p=[];for(let i=0;i<8;i++){const a=Math.PI/8+i*Math.PI/4;
+  p.push((cx+r*Math.cos(a)).toFixed(1)+","+(cy+r*Math.sin(a)).toFixed(1));}return p.join(" ");}
+function pentPts(cx,cy,r){const p=[];for(let i=0;i<5;i++){const a=-Math.PI/2+i*2*Math.PI/5;
+  p.push((cx+r*Math.cos(a)).toFixed(1)+","+(cy+r*Math.sin(a)).toFixed(1));}return p.join(" ");}
+function shapeInner(t,cx,cy,rr){const r=rr||R;
+  if(t==="circle")return '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'"/>';
+  if(t==="square")return '<rect x="'+(cx-r*0.85)+'" y="'+(cy-r*0.85)+'" width="'+(r*1.7)+'" height="'+(r*1.7)+'"/>';
+  if(t==="triangle")return '<polygon points="'+cx+','+(cy-r)+' '+(cx+r*0.95)+','+(cy+r*0.8)+' '+(cx-r*0.95)+','+(cy+r*0.8)+'"/>';
+  if(t==="diamond")return '<polygon points="'+cx+','+(cy-r)+' '+(cx+r)+','+cy+' '+cx+','+(cy+r)+' '+(cx-r)+','+cy+'"/>';
+  if(t==="star")return '<polygon points="'+starPts(cx,cy,r+2)+'"/>';
+  if(t==="octagon")return '<polygon points="'+octPts(cx,cy,r+1)+'"/>';
+  return '<polygon points="'+pentPts(cx,cy,r+1)+'"/>';}
+function render(){
+  if(!root){svg.setAttribute("viewBox","0 0 400 90");
+    svg.innerHTML='<text x="200" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8f8b81">pick a preset above — or set a residue and ADD TO SELECTED</text>';
+    out.textContent="—";return;}
+  leaf=0;maxD=0;walk(root,0);
+  const W=SIDE+maxD*DX+ENDW+SIDE,H=Math.max(leaf*DY+TOP+24,168);
+  const X=n=>W-ENDW-n._d*DX, Y=n=>TOP+n._y*DY;
+  let s="";
+  const edge=(n)=>{if(!n.parent)return "";const x1=X(n),y1=Y(n),x2=X(n.parent),y2=Y(n.parent);
+    const mx=(x1+x2)/2,my=(y1+y2)/2,a=n.anomer==="a"?"a":"b";
+    return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#4a4752" stroke-width="1.3"/>'+
+      '<text x="'+mx+'" y="'+(my-8)+'" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#8f8b81">'+a+n.donor+"-"+(n.acceptor||"?")+"</text>";};
+  const all=[];(function col(n){all.push(n);n.children.forEach(col);})(root);
+  all.forEach(n=>{s+=edge(n);});
+  all.forEach(n=>{const st=SNFG[n.name]||["pentagon","#999999"],x=X(n),y=Y(n);
+    const ring=n.id===selId?'<circle cx="'+x+'" cy="'+y+'" r="'+(R+7)+'" fill="none" stroke="#ff6a42" stroke-width="1.4" stroke-dasharray="4 3"/>':"";
+    s+='<g data-id="'+n.id+'" style="cursor:pointer" fill="'+st[1]+'" stroke="#ede9dd" stroke-width="1.5">'+ring+shapeInner(st[0],x,y)+"</g>"+
+      '<text x="'+x+'" y="'+(y-R-9)+'" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#ede9dd">'+n.name+"</text>";});
+  s+='<text x="10" y="'+(H-10)+'" font-family="IBM Plex Mono" font-size="10.5" fill="#8f8b81">◂ non-reducing end</text>';
+  const rx=X(root),ry=Y(root);
+  s+='<text x="'+(rx+R+10)+'" y="'+(ry+4)+'" font-family="IBM Plex Mono" font-size="10.5" fill="#93d179">−'+(root.aglycone||"OH")+' · reducing end ▸</text>';
+  svg.setAttribute("viewBox","0 0 "+W+" "+H);svg.innerHTML=s;
+  out.textContent=cRoot(root);
+}
+function ntoast(html){const t=document.getElementById("toast");t.innerHTML=html;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2200);}
+svg.addEventListener("click",e=>{const g=e.target.closest("[data-id]");if(g){selId=+g.getAttribute("data-id");render();}});
+/* full residue list: program RESIDUE_CHOICES + every SNFG-mapped residue */
+const RESGROUPS=[["Hexose",["Glc","Gal","Man"]],["HexNAc",["GlcNAc","GalNAc","ManNAc"]],
+  ["Deoxy",["Fuc","Rha"]],["Uronic acid",["GlcA","GalA","IdoA"]],
+  ["Sialic · Kdo",["Neu5Ac","Neu5Gc","Kdo"]],["Other",["Xyl","GlcN","FucNAc","ManA","Ido"]]];
+const resList=document.getElementById("snResList"),resBtn=document.getElementById("snResBtn");
+(function buildResList(){let h="";
+  RESGROUPS.forEach(g=>{h+="<h6>"+g[0].toUpperCase()+"</h6>"+'<div class="sn-resgrid">';
+    g[1].forEach(n=>{const st=SNFG[n]||["pentagon","#999999"];
+      h+='<button class="sn-res'+(n===pendRes?" on":"")+'" data-res="'+n+'">'+
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="'+st[1]+'" stroke="#ede9dd" stroke-width="1.4">'+shapeInner(st[0],12,12,8)+"</svg>"+n+"</button>";});
+    h+="</div>";});
+  resList.innerHTML=h;})();
+function syncResBtn(){const st=SNFG[pendRes]||["pentagon","#999999"];
+  document.getElementById("snResName").textContent=pendRes;
+  document.getElementById("snResDot").style.color=st[1];
+  resList.querySelectorAll(".sn-res").forEach(x=>x.classList.toggle("on",x.dataset.res===pendRes));}
+function syncAnoBtns(){document.querySelectorAll('#snPal [data-ano]').forEach(x=>x.classList.toggle("on",x.dataset.ano===pendAno));}
+function setRes(name){pendRes=name;
+  if(name==="Neu5Ac"||name==="Neu5Gc"||name==="Kdo"){pendAno="a";donorEl.value="2";}
+  else if(name==="Fuc"||name==="Rha"||name==="Man"){pendAno="a";donorEl.value="1";}
+  else{pendAno="b";donorEl.value="1";}
+  syncResBtn();syncAnoBtns();}
+resBtn.addEventListener("click",e=>{e.stopPropagation();resList.classList.toggle("open");});
+resList.addEventListener("click",e=>{const b=e.target.closest("[data-res]");if(!b)return;
+  setRes(b.dataset.res);resList.classList.remove("open");});
+document.addEventListener("click",e=>{if(!e.target.closest(".sn-reswrap"))resList.classList.remove("open");});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")resList.classList.remove("open");});
+document.getElementById("snPal").addEventListener("click",e=>{const b=e.target.closest("[data-ano]");if(!b)return;
+  pendAno=b.dataset.ano;syncAnoBtns();});
+document.getElementById("snApply").addEventListener("click",()=>{
+  if(!root||selId==null)return;const n=find(root,selId);if(!n)return;
+  n.name=pendRes;n.anomer=pendAno;
+  if(n.parent){n.donor=donorEl.value.trim()||"1";n.acceptor=accEl.value.trim()||"?";}
+  else{n.aglycone=agEl.value;}
+  render();ntoast("Selected residue <b>updated</b>.");});
+document.getElementById("snAdd").addEventListener("click",()=>{
+  if(!root){root=mk(pendRes,pendAno,"1","",agEl.value);selId=root.id;}
+  else{const p=find(root,selId)||root;
+    selId=kid(p,mk(pendRes,pendAno,donorEl.value.trim()||"1",accEl.value.trim()||"?")).id;}
+  render();});
+document.getElementById("snDel").addEventListener("click",()=>{
+  if(!root||selId==null)return;const n=find(root,selId);if(!n)return;
+  if(!n.parent){root=null;selId=null;}
+  else{n.parent.children=n.parent.children.filter(c=>c!==n);selId=n.parent.id;}
+  render();});
+agEl.addEventListener("change",()=>{if(root){root.aglycone=agEl.value;render();}});
+document.getElementById("snCopy").addEventListener("click",()=>{
+  const t=out.textContent;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(
+    ()=>ntoast("Condensed sequence <b>copied</b>."),()=>ntoast("Clipboard unavailable — copy by hand."));});
+document.getElementById("snPresets").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  uid=1;const k=b.dataset.preset;
+  if(k==="clear"){root=null;selId=null;render();return;}
+  const g0=mk("Gal","b","1","",agEl.value);root=g0;
+  if(k==="lac"){agEl.value="OH";g0.name="Glc";g0.aglycone="OH";kid(g0,mk("Gal","b","1","4"));selId=root.id;render();return;}
+  const gn=kid(g0,mk("GlcNAc","b","1","3"));
+  const g1=kid(gn,mk("Gal","b","1","4"));
+  kid(gn,mk("Fuc","a","1","3"));
+  if(k==="slex"){selId=kid(g1,mk("Neu5Ac","a","2","3")).id;}
+  else{selId=g1.id;}
+  render();});
+/* default view = the figure above: sLeX–OEt */
+(function init(){agEl.value="OEt";uid=1;
+  const g0=mk("Gal","b","1","","OEt");root=g0;
+  const gn=kid(g0,mk("GlcNAc","b","1","3"));
+  const g1=kid(gn,mk("Gal","b","1","4"));
+  kid(gn,mk("Fuc","a","1","3"));
+  selId=kid(g1,mk("Neu5Ac","a","2","3")).id;
+  render();})();
+})();
+</script>
+</body>
+</html>
