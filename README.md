@@ -22,15 +22,20 @@ page — files download directly, no intermediate page.
 
 | File | Size | What it is |
 |---|---|---|
-| `ResonaSetup-0.1.0.exe` | — | Installer — installs the app **and** the MCP server |
+| `ResonaSetup-0.1.0.exe` | 104 MB | Installer — app **and** MCP server. Most users take this one. |
+| `ResonaAppSetup-0.1.0.exe` | 68 MB | Installer — app only, no agent server. |
+| `ResonaMCP-0.1.0-win64.zip` | 54 MB | MCP server only, for agent-only machines. |
 
-Windows ships as a single installer. There is nothing else to download.
+The two installers share one AppId, so installing one over the other
+upgrades in place.
 
 Latest version, direct links:
 
 - macOS app: <https://github.com/all4nmr/resona-releases/releases/latest/download/Resona-0.1.0-mac-arm64.dmg>
 - macOS MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-0.1.0-mac-arm64.zip>
-- Windows installer: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaSetup-0.1.0.exe>
+- Windows installer (app + server): <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaSetup-0.1.0.exe>
+- Windows installer (app only): <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaAppSetup-0.1.0.exe>
+- Windows MCP server: <https://github.com/all4nmr/resona-releases/releases/latest/download/ResonaMCP-0.1.0-win64.zip>
 
 ## macOS: install the app
 
